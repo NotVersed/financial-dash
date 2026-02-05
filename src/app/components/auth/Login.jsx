@@ -10,7 +10,8 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner"; 
-import client from "@/api/client"
+import client from "@/api/client";
+import Link from "next/link";
 
 
 const Login = () => {
@@ -26,33 +27,55 @@ const Login = () => {
         })
 
         if (error) {
-            toast.error("An error occurred. Please check your credentials and try again.");
+            toast.error("Invalid credentials. Please check your credentials and try again.");
         } else {
             console.log("User successfully logged in!"); 
         } 
     }
     // the html object to return 
-    return <Card>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>Enter email and password to login</CardDescription>
-        <CardContent>
-            <form onSubmit={(handleLogin)}>
-                <div className="flex flex-col gap-6">
-                    <div className="grid gap-2">
-                        <Label>Email</Label>
-                        <Input id="email" type="email" placeholder="example@gmail.com"/>
+    return (
+    // neutral grey background
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-gray-50 to-zinc-100 p-4">
+        {/*Logo/Brand*/}
+        <div className="absolute top-8 left-8">
+            <h2 className="text-2xl font-bold text-slate-800">LIFE</h2>
+        </div>
+        <Card className="w-full max-w-md shadow-2xl border-slate-200">
+            <CardHeader className="space-y-1 text-center pb-6">
+                <CardTitle className="text-3xl font-bold text-slate-800">
+                    Welcome Back
+                </CardTitle>
+                <CardDescription className="text-base text-slate-600">
+                    Client Financial Progress Tracking System
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={(handleLogin)} className="space-y-5">
+                    <div className="space-y-10">
+
+                        <div className="grid gap-2">
+                            <Label>Email</Label>
+                            <Input id="email" 
+                            type="email" 
+                            placeholder="example@gmail.com"
+                            className="h-11 border-slate-300 focus:border-slate-500 focus:ring-slate-500"/>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label>Password</Label>
+                            <Input id="password" type="password" placeholder="Password"/>
+                        </div>
+
+                        <Button type="submit" className="w-full">
+                            Login
+                        </Button>
+
                     </div>
-                    <div className="grid gap-2">
-                        <Label>Password</Label>
-                        <Input id="password" type="password" placeholder="Password"/>
-                    </div>
-                    <Button type="submit" className="w-full">
-                        Login
-                    </Button>
-                </div>
-            </form>
-        </CardContent>
-    </Card>
+                </form>
+            </CardContent>
+        </Card>
+    </div>
+    )
 }; 
 
 export default Login; 
