@@ -73,12 +73,8 @@ const Signup = () => {
     }
     // return the html
     return (
-        // neutral grey background
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-gray-50 to-zinc-100 p-4">
-            {/*Logo/Brand*/}
-            <div className="absolute top-8 left-8">
-                <h2 className="text-2xl font-bold text-slate-800">LIFE</h2>
-            </div>
+        // neutral grey background that accounts for nav bar
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-slate-100 via-gray-50 to-zinc-100 p-4">
             <Card className="w-full max-w-md shadow-2xl border-slate-200">
                 <CardHeader className="space-y-1 text-center pb-6">
                     <CardTitle className="text-3xl font-bold text-slate-800">
