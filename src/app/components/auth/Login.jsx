@@ -10,27 +10,39 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner"; 
-import client from "@/api/client";
+import {useRouter} from "next/navigation";
 import Link from "next/link";
 
 
 const Login = () => {
-    const handleLogin = async (e) => {
-        e.preventDefault(); 
-        const email = e.target[0]?.value; 
-        const password = e.target[1]?.value; 
+    const router = useRouter();
+    const handleLogin = async (e) =>{
 
-        /* Check if info belongs to an existing user */
-        const {data, error} = await client.auth.signInWithPassword({
-            email, 
-            password
-        })
+        e.preventDefault()
 
-        if (error) {
-            toast.error("Invalid credentials. Please check your credentials and try again.");
-        } else {
-            console.log("User successfully logged in!"); 
-        } 
+        const email = e.target[0]?.value;
+        const password = e.target[1]?.value;
+
+        try{
+            // call api
+            const res = await fetch("/api/auth/login",{
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({email, password}),
+            });
+            const data = await res.json();
+
+            if(!res.ok){
+                toast.error(data.error || "Invalid Credentials");
+                return;
+            }   
+            router.push("/dashboard");
+        }
+        catch(error){
+            console.error(error);
+            toast.error("Server error, please try again later.");
+        }
+
     }
     // the html object to return 
     return (
