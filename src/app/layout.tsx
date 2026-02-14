@@ -30,7 +30,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      // change: use .className instead of .variable to prevent hydration errors
+        className={`${geistSans.className} ${geistMono.className} antialiased`}
       >
         <SimpleNav />
         <AuthProvider>{children}</AuthProvider>

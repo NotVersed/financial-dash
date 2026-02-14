@@ -1,3 +1,20 @@
+/*
+
+This component is a wrapper around the Sonner Toaster component, which provides a consistent 
+styling and theming for toast notifications in the application. It uses the useTheme hook 
+from next-themes to determine the current theme and applies it to the Sonner component. 
+The icons for different toast types are also customized using lucide-react icons.
+
+How to trigger notifications: import and call Sonner's API, for example:
+  import { toast } from "sonner"
+  toast.success("Saved"), 
+  toast.error("Failed"), 
+  toast("Hello"), 
+  toast.loading("Saving...")
+
+*/
+
+
 "use client"
 
 import {

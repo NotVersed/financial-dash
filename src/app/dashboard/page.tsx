@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import CustomProgressBar from "@/components/ui/progressbar";
 
 export default function Page() {
   return (
@@ -14,12 +15,16 @@ export default function Page() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Sample Card 1</h3>
             <p className="text-3xl font-bold text-blue-600">$12,450</p>
             <p className="text-sm text-gray-500 mt-1">Sample metric</p>
+            {/* TODO: code the bar with customer's data */}
+            <CustomProgressBar current={45} goal={100} label="Progress towards goal" color="green" />
           </Card>
 
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Sample Card 2</h3>
             <p className="text-3xl font-bold text-green-600">$3,220</p>
             <p className="text-sm text-gray-500 mt-1">Another metric</p>
+            {/* TODO: code the bar with customer's data */}
+            <CustomProgressBar current={75} goal={100} label="Progress towards goal" color="green" />
           </Card>
 
           <Card className="p-6">
