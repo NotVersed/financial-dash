@@ -17,9 +17,10 @@
       {
         "name": "next"
       }
+    // TODO: May have to configure Jest to work with Module Path Aliases
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
