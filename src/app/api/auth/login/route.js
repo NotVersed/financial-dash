@@ -1,9 +1,11 @@
-import client from "@/api/client";
+import { createClient } from "@/api/serverClient";
 
 export async function POST(req) {
   const { email, password } = await req.json();
 
-  const { data, error } = await client.auth.signInWithPassword({
+  const supabase = await createClient(); // server client
+
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -15,7 +17,7 @@ export async function POST(req) {
   }
 
   return new Response(
-    JSON.stringify({ id: data.user.id, email: data.user.email }),
+    JSON.stringify({ user: { id: data.user.id, email: data.user.email } }),
     { status: 200 },
   );
 }
