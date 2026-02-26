@@ -1,7 +1,6 @@
 ﻿'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +12,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,17 +19,19 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (error) throw error
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Login failed')
 
       router.push('/dashboard')
       router.refresh()
-    } catch (error: any) {
-      setError(error.message)
+    } catch (err: any) {
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -43,16 +43,18 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (error) throw error
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Sign up failed')
 
       setError('Check your email for the confirmation link!')
-    } catch (error: any) {
-      setError(error.message)
+    } catch (err: any) {
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -61,7 +63,7 @@ export default function LoginPage() {
   return (
     // Neutral Gray Background
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-gray-50 to-zinc-100 p-4">
-      
+
       {/* Logo/Brand */}
       <div className="absolute top-8 left-8">
         <h2 className="text-2xl font-bold text-slate-800">LIFE</h2>
@@ -124,7 +126,7 @@ export default function LoginPage() {
               >
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
-              
+
               <Button
                 type="button"
                 variant="outline"

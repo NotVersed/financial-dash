@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/api/serverClient";
+import { NextResponse } from 'next/server'
+import { createClient } from "@/app/api/server/serverClient";
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json();
@@ -12,13 +13,8 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 401,
-    });
+    return NextResponse.json({ error: error.message }, { status: 401 })
   }
 
-  return new Response(
-    JSON.stringify({ user: { id: data.user.id, email: data.user.email } }),
-    { status: 200 },
-  );
+  return NextResponse.json({ user: { id: data.user.id, email: data.user.email } })
 }

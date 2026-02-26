@@ -19,7 +19,6 @@
       }
     ],
     // TODO: May have to configure Jest to work with Module Path Aliases
-    "baseUrl": "src",
     "paths": {
       "@/*": ["./*"]
     }

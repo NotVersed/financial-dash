@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server"
 
-
-import { createClient } from "@/api/serverClient";
+import { createClient } from "@/app/api/server/serverClient";
 
 export async function POST(req: NextRequest) {
   try {
