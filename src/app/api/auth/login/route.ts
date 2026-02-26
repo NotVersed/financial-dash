@@ -1,6 +1,7 @@
+import { NextRequest } from "next/server";
 import { createClient } from "@/api/serverClient";
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const { email, password } = await req.json();
 
   const supabase = await createClient(); // server client

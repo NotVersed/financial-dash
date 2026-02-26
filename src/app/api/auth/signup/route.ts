@@ -1,6 +1,9 @@
+import { NextRequest } from "next/server"
+
+
 import { createClient } from "@/api/serverClient";
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
