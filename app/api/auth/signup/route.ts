@@ -1,69 +1,42 @@
-import { NextRequest } from "next/server"
-
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/app/api/server/serverClient";
+import { validatePassword } from "@/app/api/utils/password-validator";
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
-
+    const trimmedEmail =
+      typeof email === "string" ? email.trim().toLowerCase() : "";
+    if (!trimmedEmail || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 },
+      );
+    }
+    const pwError = validatePassword(password);
+    if (pwError) {
+      return NextResponse.json({ error: pwError }, { status: 400 });
+    }
     const supabase = await createClient();
 
-    if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: "Email and password are required" }),
-        { status: 400 },
-      );
-    }
-
-    if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters" }),
-        { status: 400 },
-      );
-    }
-
-    if (!/[!#$%&'()*+-.\/:;=?@[\]^_]/.test(password)) {
-      return new Response(
-        JSON.stringify({ error: "Password must contain a special character" }),
-        { status: 400 },
-      );
-    }
-
-    if (!/[0-9]/.test(password)) {
-      return new Response(
-        JSON.stringify({ error: "Password must contain a number" }),
-        { status: 400 },
-      );
-    }
-
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password)) {
-      return new Response(
-        JSON.stringify({
-          error: "Password must have both uppercase and lowercase letters",
-        }),
-        { status: 400 },
-      );
-    }
-
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email: trimmedEmail,
+      password,
+    });
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 400,
-      });
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         message:
           "Signup successful. Please confirm your email before logging in.",
-      }),
+      },
       { status: 200 },
     );
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-    });
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

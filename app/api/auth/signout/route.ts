@@ -1,15 +1,20 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/app/api/server/serverClient'
+import { NextResponse } from "next/server";
+import { createClient } from "@/app/api/server/serverClient";
 
 export async function POST() {
-  // create server client instance
-  const supabase = await createClient()
+  try {
+    // create server client instance
+    const supabase = await createClient();
 
-  const { error } = await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true })
 }
