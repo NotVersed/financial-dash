@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
+import DashboardCharts from '@/components/DashboardCharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { redirect } from 'next/navigation'
 import { Users, TrendingUp, DollarSign, PiggyBank, CreditCard, Target } from 'lucide-react'
 import Link from 'next/link'
-import DashboardCharts from '@/components/DashboardCharts'
 
 
 async function getDashboardStats() {
@@ -192,3 +192,4 @@ export default async function DashboardPage() {
     </div>
   )
 }
+
