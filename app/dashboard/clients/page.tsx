@@ -4,18 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users } from 'lucide-react'
 import Link from 'next/link'
 
+import { CLIENT_NAME_COL, CLIENT_TABLE_NAME } from './dataInformation.js'
+
 export default async function ClientsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const clientTableName = "Fake_Clients"
-  const clientNameCol = "client_name"
-
   const { data: clients } = await supabase
-    .from(clientTableName)
+    .from(CLIENT_TABLE_NAME)
     .select('*')
-    .order(clientNameCol, { ascending: true })
+    .order(CLIENT_NAME_COL, { ascending: true })
 
   return (
     <div className="p-8">
