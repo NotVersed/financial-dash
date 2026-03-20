@@ -9,10 +9,13 @@ export default async function ClientsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const clientTableName = "Fake_Clients"
+  const clientNameCol = "client_name"
+
   const { data: clients } = await supabase
-    .from('clients')
+    .from(clientTableName)
     .select('*')
-    .order('name', { ascending: true })
+    .order(clientNameCol, { ascending: true })
 
   return (
     <div className="p-8">
@@ -31,7 +34,7 @@ export default async function ClientsPage() {
                     <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm">
                       {client.name?.charAt(0) || '?'}
                     </div>
-                    {client.name || 'Unnamed Client'}
+                    {client.client_name|| 'Unnamed Client'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
