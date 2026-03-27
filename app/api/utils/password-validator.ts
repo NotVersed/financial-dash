@@ -7,7 +7,7 @@ export function validatePassword(password: unknown): string | null {
     return "Password must be at least 6 characters";
   }
 
-  if (!/[!#$%&'()*+-.\/:;=?@[\]^_]/.test(password)) {
+  if (!/[^A-Za-z0-9\s]/.test(password)) {
     return "Password must contain a special character";
   }
 

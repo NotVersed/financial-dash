@@ -46,8 +46,8 @@ export async function POST(req: Request) {
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     if (!email) return jsonError("Email is required.", 400);
 
-    // default redirect user to login page
-    const defaultRedirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/login`;
+    // default redirect user to password reset page
+    const defaultRedirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/password-reset`;
 
     // fallback on default redirect if redirectTo is invalid
     const redirectTo =
@@ -55,7 +55,6 @@ export async function POST(req: Request) {
         ? body.redirectTo.trim()
         : defaultRedirectTo;
 
-    // user will be redirected to login on email click (need to add a reset password page)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });
