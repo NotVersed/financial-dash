@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Users, FileText, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/dashboard/clients', label: 'Clients', icon: Users },
   { href: '/dashboard/reports', label: 'Reports', icon: FileText },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard/admin', label: 'Admin', icon: ShieldCheck },
 ]
 
 export default function Sidebar() {
