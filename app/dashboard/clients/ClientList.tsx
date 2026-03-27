@@ -39,7 +39,7 @@ export default function ClientList({ clients = [] }: ClientListProps) {
           placeholder="Search clients..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+          className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 text-slate-600"
         />
       </div>
 
@@ -52,7 +52,7 @@ export default function ClientList({ clients = [] }: ClientListProps) {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm">
-                      {client.name?.charAt(0) || '?'}
+                      {client.client_name?.charAt(0) || '?'}
                     </div>
                     {client.client_name || 'Unnamed Client'}
                   </CardTitle>
