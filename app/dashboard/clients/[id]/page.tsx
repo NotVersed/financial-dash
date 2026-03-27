@@ -1,8 +1,13 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { CreditCard, TrendingUp, DollarSign, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import ClientEditForm from './ClientEditForm'
+
+
 
 type ClientInfo = {
   id: number
@@ -25,10 +30,10 @@ export default async function ClientDetailPage({
   const cookieStore = await cookies()
 
   const res = await fetch(`http://localhost:3000/api/clients/${id}`, {
-    cache: 'no-store',
     headers: {
       cookie: cookieStore.toString(),
     },
+    cache: 'no-store',
   })
 
   if (res.status === 401) {
@@ -59,7 +64,6 @@ export default async function ClientDetailPage({
         <ArrowLeft className="w-4 h-4" />
         Back to Clients
       </Link>
-
       <div className="mb-8">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 font-bold text-lg">
@@ -197,6 +201,16 @@ export default async function ClientDetailPage({
           )}
         </CardContent>
       </Card>
+      
+      <div className="mt-6">
+        <Link
+          href={`/dashboard/clients/${client.id}/edit`}
+          className="inline-block rounded-md bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800"
+        >
+          Edit Client Information
+        </Link>
+      </div>
+
     </div>
   )
 }
