@@ -74,14 +74,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
   }
 
-  const { data: updatedRows, error:  updateError } = await supabase
+  const { error: updateError } = await supabase
     .from(CLIENT_TABLE_NAME)
     .update(updates)
     .eq('id', clientId)
-    .select()
 
-    console.log('UPDATED ROWS:', updatedRows)
-    console.log('UPDATE ERROR:', updateError)
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 })
@@ -89,8 +86,6 @@ export async function PATCH(
 
   const { data: clientInfo, error: fetchError } = await supabase
     .from(CLIENT_TABLE_NAME)
-    .update(updates)
-    .eq('id', clientId)
     .select(`
       id,
       client_name,
@@ -102,11 +97,11 @@ export async function PATCH(
       goal_net_income,
       goal_net_worth
     `)
-    .maybeSingle()
+    .eq('id', clientId)
+    .single()
 
-    console.log('UPDATED ROWS:', updatedRows)
-    console.log('UPDATE ERROR:', updateError)
-
+    console.log('UPDATED CLIENT INFO:', clientInfo)
+    console.log('FETCH ERROR:', fetchError)
 
   if (fetchError) {
     return NextResponse.json({ error: fetchError.message }, { status: 500 })
@@ -120,9 +115,6 @@ export async function PATCH(
   }
 
   return NextResponse.json({ clientInfo })
-  return NextResponse.json({
-    clientInfo: client,
-  })
 }
 
 export async function DELETE(
