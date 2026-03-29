@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -37,28 +40,46 @@ export default function LoginPage() {
     }
   }
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/password-reset`,
+    })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Sign up failed')
-
-      setError('Check your email for the confirmation link!')
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+    setLoading(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      setResetSent(true)
     }
   }
+
+  // const handleSignUp = async (e: React.FormEvent) => {
+  //   e.preventDefault()
+  //   setLoading(true)
+  //   setError(null)
+
+  //   try {
+  //     const res = await fetch('/api/auth/signup', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ email, password }),
+  //     })
+
+  //     const data = await res.json()
+  //     if (!res.ok) throw new Error(data.error || 'Sign up failed')
+
+  //     setError('Check your email for the confirmation link!')
+  //   } catch (err: any) {
+  //     setError(err.message)
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
   return (
     // Neutral Gray Background
@@ -80,6 +101,56 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
+          {forgotPasswordMode ? (
+            <form onSubmit={handleForgotPassword} className="space-y-5">
+              {resetSent ? (
+                <div className="p-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg">
+                  Password reset email sent! Check your inbox.
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-600">
+                    Enter your email address and we&apos;ll send you a link to reset your password.
+                  </p>
+                  <div className="space-y-2">
+                    <label htmlFor="reset-email" className="text-sm font-semibold text-slate-700">
+                      Email Address
+                    </label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="h-11 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                    />
+                  </div>
+                  {error && (
+                    <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                      {error}
+                    </div>
+                  )}
+                  <Button
+                    type="submit"
+                    className="w-full h-11 bg-slate-700 hover:bg-slate-800 text-white font-semibold shadow-md"
+                    disabled={loading}
+                  >
+                    {loading ? 'Sending...' : 'Send Reset Email'}
+                  </Button>
+                </>
+              )}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setForgotPasswordMode(false); setResetSent(false); setError(null) }}
+                  className="text-sm text-slate-600 hover:text-slate-800 font-medium"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            </form>
+          ) : (
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-semibold text-slate-700">
@@ -127,7 +198,8 @@ export default function LoginPage() {
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
 
-              <Button
+              {/* Create Account button hidden — accounts are managed manually by admins */}
+              {/* <Button
                 type="button"
                 variant="outline"
                 className="h-11 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
@@ -135,15 +207,20 @@ export default function LoginPage() {
                 disabled={loading}
               >
                 Create Account
-              </Button>
+              </Button> */}
             </div>
 
             <div className="text-center pt-2">
-              <a href="#" className="text-sm text-slate-600 hover:text-slate-800 font-medium">
+              <button
+                type="button"
+                onClick={() => { setForgotPasswordMode(true); setError(null) }}
+                className="text-sm text-slate-600 hover:text-slate-800 font-medium"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
           </form>
+          )}
         </CardContent>
       </Card>
 

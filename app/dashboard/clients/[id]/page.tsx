@@ -4,16 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CreditCard, TrendingUp, DollarSign, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
+import { CLIENT_NAME_COL, CLIENT_TABLE_NAME } from '../dataInformation.js'
+
 export default async function ClientDetailPage({ params }: { params: { id: string } }) {
+  
+  const {id} = await params
+  const id_int = parseInt(id, 10)
+
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   // Get client info
   const { data: client } = await supabase
-    .from('clients')
+    .from(CLIENT_TABLE_NAME)
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id_int)
     .single()
 
   if (!client) notFound()
@@ -22,7 +29,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const { data: metrics } = await supabase
     .from('financial_metrics')
     .select('*')
-    .eq('client_id', params.id)
+    .eq('client_id', id_int)
     .order('metric_date', { ascending: false })
     .limit(10)
 
@@ -32,13 +39,13 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const { data: loans } = await supabase
     .from('loan_participation')
     .select('*')
-    .eq('client_id', params.id)
+    .eq('client_id', id_int)
 
   // Get milestones for this client
   const { data: milestones } = await supabase
     .from('milestones')
     .select('*')
-    .eq('client_id', params.id)
+    .eq('client_id', id_int)
     .order('achieved_date', { ascending: false })
 
   return (
