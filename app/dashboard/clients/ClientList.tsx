@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Search } from 'lucide-react'
+import { Users, Search, UserPlus, X } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 type Client = {
   id: string | number
@@ -19,29 +21,197 @@ type ClientListProps = {
 
 export default function ClientList({ clients = [] }: ClientListProps) {
   const [search, setSearch] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState('active')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
 
   const filteredClients = clients.filter((client) => {
     const searchLower = search.toLowerCase()
-
     return (
       client.client_name?.toLowerCase().includes(searchLower) ||
       client.email?.toLowerCase().includes(searchLower)
     )
   })
 
+  const handleSubmit = async () => {
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      setError('First name, last name, and email are required.')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    const { error: insertError } = await supabase
+      .from('clients')
+      .insert([{
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        client_name: `${firstName.trim()} ${lastName.trim()}`,
+        email: email.trim(),
+        status
+      }])
+
+    if (insertError) {
+      setError('Failed to add client. ' + insertError.message)
+      setLoading(false)
+      return
+    }
+
+    setSuccess(true)
+    setLoading(false)
+    setTimeout(() => {
+      setShowModal(false)
+      setFirstName('')
+      setLastName('')
+      setEmail('')
+      setStatus('active')
+      setSuccess(false)
+      router.refresh()
+    }, 1200)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setFirstName('')
+    setLastName('')
+    setEmail('')
+    setStatus('active')
+    setError('')
+    setSuccess(false)
+  }
+
   return (
     <>
-      {/* Search Bar */}
-      <div className="mb-4 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search clients..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 text-slate-600"
-        />
+      {/* Search + Add button row */}
+      <div className="mb-4 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search clients..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+          />
+        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold transition-colors whitespace-nowrap"
+        >
+          <UserPlus className="w-4 h-4" />
+          Add New Client
+        </button>
       </div>
+
+      {/* Add Client Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button onClick={closeModal} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                <UserPlus className="w-5 h-5 text-teal-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Add New Client</h2>
+                <p className="text-sm text-slate-500">Fill in the client details below</p>
+              </div>
+            </div>
+
+            {success && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-green-600 text-sm font-medium">✅ Client added successfully!</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    First Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    placeholder="Jane"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Last Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    placeholder="Smith"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Email Address <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="jane@email.com"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                <select
+                  value={status}
+                  onChange={e => setStatus(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-slate-900"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={closeModal}
+                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading || success}
+                  className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Adding...' : 'Add Client'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Client Grid */}
       {filteredClients && filteredClients.length > 0 ? (
@@ -51,7 +221,7 @@ export default function ClientList({ clients = [] }: ClientListProps) {
               <Card className="hover:shadow-md hover:border-slate-300 transition-all cursor-pointer">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">
                       {client.client_name?.charAt(0) || '?'}
                     </div>
                     {client.client_name || 'Unnamed Client'}
@@ -60,22 +230,12 @@ export default function ClientList({ clients = [] }: ClientListProps) {
                 <CardContent className="space-y-1">
                   <p className="text-sm text-slate-500">
                     Status:
-                    <span
-                      className={`ml-1 font-medium ${
-                        client.status === 'active'
-                          ? 'text-green-600'
-                          : 'text-slate-400'
-                      }`}
-                    >
+                    <span className={`ml-1 font-medium ${client.status === 'active' ? 'text-green-600' : 'text-slate-400'}`}>
                       {client.status || 'N/A'}
                     </span>
                   </p>
-                  <p className="text-sm text-slate-500">
-                    Email: {client.email || 'N/A'}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Click to view full profile →
-                  </p>
+                  <p className="text-sm text-slate-500">Email: {client.email || 'N/A'}</p>
+                  <p className="text-xs text-slate-400 mt-2">Click to view full profile →</p>
                 </CardContent>
               </Card>
             </Link>
