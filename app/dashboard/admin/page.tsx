@@ -2,11 +2,22 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ShieldCheck, Users, Database, Activity } from 'lucide-react'
+import CreateAdminAccountCard from './CreateAdminAccountCard'
 
 export default async function AdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role, is_active')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || profile.role !== 'admin' || profile.is_active !== true) {
+    redirect('/dashboard')
+  }
 
   const { count: totalClients } = await supabase
     .from('clients')
@@ -96,6 +107,8 @@ export default async function AdminPage() {
           </div>
         </CardContent>
       </Card>
+
+      <CreateAdminAccountCard />
 
       {/* Database Info */}
       <Card>
