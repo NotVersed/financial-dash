@@ -4,17 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { redirect } from 'next/navigation'
 import { Users, TrendingUp, DollarSign, PiggyBank, CreditCard, Target } from 'lucide-react'
 import Link from 'next/link'
+import { CLIENT_TABLE_NAME } from './clients/dataInformation.js'
 
 
 async function getDashboardStats() {
   const supabase = await createClient()
 
   const { count: totalClients } = await supabase
-    .from('clients')
+    .from(CLIENT_TABLE_NAME)
     .select('*', { count: 'exact', head: true })
 
   const { count: activeClients } = await supabase
-    .from('clients')
+    .from(CLIENT_TABLE_NAME)
     .select('*', { count: 'exact', head: true })
     .eq('status', 'active')
 
