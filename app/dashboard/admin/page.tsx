@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ShieldCheck, Users, Database, Activity } from 'lucide-react'
+import CreateAdminAccountCard from './CreateAdminAccountCard'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -75,6 +76,8 @@ export default async function AdminPage() {
           </CardContent>
         </Card>
       </div>
+
+      <CreateAdminAccountCard />
 
       {/* Current Admin */}
       <Card className="mb-6">
