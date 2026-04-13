@@ -70,6 +70,14 @@ export default async function ClientDetailPage({
   const sortedNotes = [...notes].sort( (a,b)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
 
+  console.log(
+  sortedNotes.map((note, index) => ({
+    index,
+    id: note.id,
+    content: note.content,
+    created_at: note.created_at,
+  }))
+)
   return (
     <div className="p-8">
       <Link
@@ -229,7 +237,7 @@ export default async function ClientDetailPage({
           </CardHeader>
           <CardContent>
             <div className="flex gap-4 overflow-x-auto pb-2">
-
+              
               <AddNoteForm clientId={client.id}/>
                   {sortedNotes.map((note) => (
                     <div key={note.id} className="min-w-[250px] rounded-lg border border-slate-200 p-4 bg-white shadow-sm">
