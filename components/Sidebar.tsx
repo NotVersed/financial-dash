@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Users, FileText, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
+import { Logo } from './shared/Logo'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -40,8 +41,7 @@ export default function Sidebar() {
 
       {/* Logo */}
       <div className="px-6 py-5 border-b border-slate-200">
-        <h2 className="text-xl font-bold text-slate-800">LIFE</h2>
-        <p className="text-xs text-slate-500 mt-0.5">Financial Progress Tracker</p>
+        <Logo showText />
       </div>
 
       {/* Navigation */}
