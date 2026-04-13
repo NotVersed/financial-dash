@@ -1,83 +1,105 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { CLIENT_TABLE_NAME } from '@/app/dashboard/clients/dataInformation'
+import {
+  CLIENT_NAME_COL,
+  CLIENT_TABLE_NAME,
+  normalizeClient,
+} from '@/app/dashboard/clients/dataInformation'
 
 export async function GET() {
-    const supabase = await createClient()
+  const supabase = await createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    const { data, error } = await supabase
-        .from(CLIENT_TABLE_NAME)
-        .select('*')
-        .order('client_name', { ascending: true })
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-    if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+  const { data, error } = await supabase
+    .from(CLIENT_TABLE_NAME)
+    .select('*')
+    .order(CLIENT_NAME_COL, { ascending: true })
 
-    return NextResponse.json(data ?? [])
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json((data ?? []).map(normalizeClient))
 }
+
 export async function POST(request: Request) {
-    const supabase = await createClient()
+  const supabase = await createClient()
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-    const body = await request.json()
+  const body = await request.json()
 
-    const {
-        client_name,
-        current_credit_score,
-        current_net_worth,
-        current_net_income,
-        notes,
-        goal_net_income,
-        goal_net_worth,
-        goal_credit_score,
-    } = body
+  const fullName =
+    typeof body.client_name === 'string' ? body.client_name.trim() : ''
+  const nameParts = fullName ? fullName.split(/\s+/) : []
 
-    if (!client_name || typeof client_name !== 'string' || !client_name.trim()) {
-        return NextResponse.json(
-            { error: 'Client name is required' },
-            { status: 400 }
-        )
-    }
+  const firstName =
+    typeof body.first_name === 'string' && body.first_name.trim()
+      ? body.first_name.trim()
+      : nameParts[0] ?? ''
 
-    const { data, error } = await supabase
-        .from(CLIENT_TABLE_NAME)
-        .insert([
-            {
-                client_name: client_name.trim(),
-                current_credit_score,
-                current_net_worth,
-                current_net_income,
-                notes,
-                goal_net_income,
-                goal_net_worth,
-                goal_credit_score,
-            },
-        ])
-        .select()
-        .single()
+  const lastName =
+    typeof body.last_name === 'string' && body.last_name.trim()
+      ? body.last_name.trim()
+      : nameParts.slice(1).join(' ')
 
-    if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+  const email =
+    typeof body.email === 'string' && body.email.trim()
+      ? body.email.trim()
+      : ''
 
+  if (!firstName || !lastName || !email) {
     return NextResponse.json(
-        {
-            message: 'Client created successfully',
-            clientInfo: data,
-        },
-        { status: 201 }
+      { error: 'First name, last name, and email are required.' },
+      { status: 400 }
     )
+  }
+
+  const now = new Date()
+
+  const { data, error } = await supabase
+    .from(CLIENT_TABLE_NAME)
+    .insert([
+      {
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        client_dob: body.client_dob ?? null,
+        current_credit_score: body.current_credit_score ?? null,
+        current_net_worth: body.current_net_worth ?? null,
+        current_net_income: body.current_net_income ?? null,
+        goal_net_income: body.goal_net_income ?? null,
+        goal_net_worth: body.goal_net_worth ?? null,
+        goal_credit_score: body.goal_credit_score ?? null,
+        created: now.toISOString().slice(0, 10),
+        last_updated: now.toISOString(),
+      },
+    ])
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json(
+    {
+      message: 'Client created successfully',
+      clientInfo: normalizeClient(data),
+    },
+    { status: 201 }
+  )
 }

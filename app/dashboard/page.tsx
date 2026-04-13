@@ -4,38 +4,62 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { redirect } from 'next/navigation'
 import { Users, TrendingUp, DollarSign, PiggyBank, CreditCard, Target } from 'lucide-react'
 import Link from 'next/link'
+import { CLIENT_TABLE_NAME } from './clients/dataInformation.js'
 
+type ClientMetricRow = {
+  current_credit_score: number | null
+  current_net_income: number | null
+  current_net_worth: number | null
+}
+
+function calculateAverage(values: Array<number | string | null | undefined>) {
+  const numericValues = values
+    .map((value) => (value == null ? null : Number(value)))
+    .filter((value): value is number => value != null && Number.isFinite(value))
+
+  if (numericValues.length === 0) {
+    return null
+  }
+
+  return Math.round(
+    numericValues.reduce((sum, value) => sum + value, 0) / numericValues.length
+  )
+}
 
 async function getDashboardStats() {
   const supabase = await createClient()
 
-  const { count: totalClients } = await supabase
-    .from('clients')
+  const { count: totalClients, error: totalClientsError } = await supabase
+    .from(CLIENT_TABLE_NAME)
     .select('*', { count: 'exact', head: true })
 
-  const { count: activeClients } = await supabase
-    .from('clients')
+  if (totalClientsError) {
+    console.error('Failed to count clients for the dashboard:', totalClientsError)
+  }
+
+  const { count: activeClients, error: activeClientsError } = await supabase
+    .from(CLIENT_TABLE_NAME)
     .select('*', { count: 'exact', head: true })
     .eq('status', 'active')
 
-  const { data: recentMetrics } = await supabase
-    .from('financial_metrics')
-    .select('credit_score, net_income, net_worth')
-    .not('credit_score', 'is', null)
-    .order('metric_date', { ascending: false })
-    .limit(100)
+  const { data: clientMetrics, error: clientMetricsError } = await supabase
+    .from(CLIENT_TABLE_NAME)
+    .select('current_credit_score, current_net_income, current_net_worth')
 
-  const avgCreditScore = recentMetrics && recentMetrics.length > 0
-    ? Math.round(recentMetrics.reduce((sum, m) => sum + (m.credit_score || 0), 0) / recentMetrics.length)
-    : 0
+  if (clientMetricsError) {
+    console.error('Failed to load current client metrics for the dashboard:', clientMetricsError)
+  }
 
-  const avgNetIncome = recentMetrics && recentMetrics.length > 0
-    ? Math.round(recentMetrics.reduce((sum, m) => sum + (m.net_income || 0), 0) / recentMetrics.length)
-    : 0
-
-  const avgNetWorth = recentMetrics && recentMetrics.length > 0
-    ? Math.round(recentMetrics.reduce((sum, m) => sum + (m.net_worth || 0), 0) / recentMetrics.length)
-    : 0
+  const metricRows: ClientMetricRow[] = clientMetrics ?? []
+  const avgCreditScore = calculateAverage(
+    metricRows.map((row) => row.current_credit_score)
+  )
+  const avgNetIncome = calculateAverage(
+    metricRows.map((row) => row.current_net_income)
+  )
+  const avgNetWorth = calculateAverage(
+    metricRows.map((row) => row.current_net_worth)
+  )
 
   const { data: loans } = await supabase
     .from('loan_participation')
@@ -50,7 +74,7 @@ async function getDashboardStats() {
 
   return {
     totalClients: totalClients || 0,
-    activeClients: activeClients || 0,
+    activeClients: activeClientsError ? totalClients || 0 : activeClients || 0,
     avgCreditScore,
     avgNetIncome,
     avgNetWorth,
@@ -71,22 +95,22 @@ export default async function DashboardPage() {
   const statCards = [
     {
       title: 'Avg Credit Score',
-      value: stats.avgCreditScore || '—',
-      description: 'Across all active clients',
+      value: stats.avgCreditScore ?? '—',
+      description: 'Across current client records',
       icon: CreditCard,
       color: 'text-blue-600',
     },
     {
       title: 'Avg Net Income',
-      value: stats.avgNetIncome ? `$${stats.avgNetIncome.toLocaleString()}` : '—',
-      description: 'Monthly average',
+      value: stats.avgNetIncome != null ? `$${stats.avgNetIncome.toLocaleString()}` : '—',
+      description: 'Based on current client income',
       icon: TrendingUp,
       color: 'text-green-600',
     },
     {
       title: 'Avg Net Worth',
-      value: stats.avgNetWorth ? `$${stats.avgNetWorth.toLocaleString()}` : '—',
-      description: 'Client average',
+      value: stats.avgNetWorth != null ? `$${stats.avgNetWorth.toLocaleString()}` : '—',
+      description: 'Based on current client net worth',
       icon: DollarSign,
       color: 'text-emerald-600',
     },
@@ -131,7 +155,7 @@ export default async function DashboardPage() {
                 <Icon className={`h-4 w-4 ${stat.color}`} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
                 <p className="text-xs text-slate-500 mt-1">{stat.description}</p>
               </CardContent>
             </Card>

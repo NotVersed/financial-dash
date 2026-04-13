@@ -1,9 +1,29 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { CLIENT_TABLE_NAME } from '@/app/dashboard/clients/dataInformation'
+import {
+  CLIENT_ID_COL,
+  CLIENT_TABLE_NAME,
+  normalizeClient,
+} from '@/app/dashboard/clients/dataInformation'
+
+const clientSelect = `
+  client_id,
+  first_name,
+  last_name,
+  email,
+  created,
+  last_updated,
+  client_dob,
+  current_credit_score,
+  current_net_worth,
+  current_net_income,
+  goal_credit_score,
+  goal_net_worth,
+  goal_net_income
+`
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
@@ -19,25 +39,15 @@ export async function GET(
 
   const { data: clientInfo, error } = await supabase
     .from(CLIENT_TABLE_NAME)
-    .select(`
-      id,
-      client_name,
-      current_credit_score,
-      current_net_worth,
-      current_net_income,
-      notes,
-      goal_net_income,
-      goal_net_worth,
-      goal_credit_score
-    `)
-    .eq('id', Number(id))
+    .select(clientSelect)
+    .eq(CLIENT_ID_COL, Number(id))
     .maybeSingle()
 
   if (error || !clientInfo) {
     return NextResponse.json({ error: 'Client not found' }, { status: 404 })
   }
 
-  return NextResponse.json({ clientInfo })
+  return NextResponse.json({ clientInfo: normalizeClient(clientInfo) })
 }
 
 export async function PATCH(
@@ -56,65 +66,56 @@ export async function PATCH(
   }
 
   const body = await request.json()
-
-  const updates = {
-    client_name: body.client_name,
-    current_credit_score: body.current_credit_score,
-    current_net_income: body.current_net_income,
-    current_net_worth: body.current_net_worth,
-    notes: body.notes,
-    goal_credit_score: body.goal_credit_score,
-    goal_net_income: body.goal_net_income,
-    goal_net_worth: body.goal_net_worth,
-  }
-
   const clientId = Number(id)
 
   if (Number.isNaN(clientId)) {
     return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
   }
 
-  const { error: updateError } = await supabase
+  const fullName =
+    typeof body.client_name === 'string' ? body.client_name.trim() : ''
+  const nameParts = fullName ? fullName.split(/\s+/) : []
+
+  const updates = Object.fromEntries(
+    Object.entries({
+      first_name:
+        typeof body.first_name === 'string' && body.first_name.trim()
+          ? body.first_name.trim()
+          : nameParts[0] ?? undefined,
+      last_name:
+        typeof body.last_name === 'string' && body.last_name.trim()
+          ? body.last_name.trim()
+          : fullName
+            ? nameParts.slice(1).join(' ')
+            : undefined,
+      current_credit_score:
+        body.current_credit_score === undefined ? undefined : body.current_credit_score,
+      current_net_income:
+        body.current_net_income === undefined ? undefined : body.current_net_income,
+      current_net_worth:
+        body.current_net_worth === undefined ? undefined : body.current_net_worth,
+      goal_credit_score:
+        body.goal_credit_score === undefined ? undefined : body.goal_credit_score,
+      goal_net_income:
+        body.goal_net_income === undefined ? undefined : body.goal_net_income,
+      goal_net_worth:
+        body.goal_net_worth === undefined ? undefined : body.goal_net_worth,
+      last_updated: new Date().toISOString(),
+    }).filter(([, value]) => value !== undefined)
+  )
+
+  const { data: clientInfo, error: updateError } = await supabase
     .from(CLIENT_TABLE_NAME)
     .update(updates)
-    .eq('id', clientId)
-
+    .eq(CLIENT_ID_COL, clientId)
+    .select(clientSelect)
+    .single()
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
 
-  const { data: clientInfo, error: fetchError } = await supabase
-    .from(CLIENT_TABLE_NAME)
-    .select(`
-      id,
-      client_name,
-      current_credit_score,
-      current_net_income,
-      current_net_worth,
-      notes,
-      goal_credit_score,
-      goal_net_income,
-      goal_net_worth
-    `)
-    .eq('id', clientId)
-    .single()
-
-    console.log('UPDATED CLIENT INFO:', clientInfo)
-    console.log('FETCH ERROR:', fetchError)
-
-  if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 })
-  }
-
-  if (!clientInfo) {
-    return NextResponse.json(
-      { error: 'Client not found after update' },
-      { status: 404 }
-    )
-  }
-
-  return NextResponse.json({ clientInfo })
+  return NextResponse.json({ clientInfo: normalizeClient(clientInfo) })
 }
 
 export async function DELETE(
@@ -141,7 +142,9 @@ export async function DELETE(
   const { data, error } = await supabase
     .from(CLIENT_TABLE_NAME)
     .delete()
-    .eq('id', clientId)
+    .eq(CLIENT_ID_COL, clientId)
+    .select(CLIENT_ID_COL)
+    .maybeSingle()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

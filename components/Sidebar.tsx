@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Users, FileText, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
+import { Logo } from './shared/Logo'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -36,16 +37,15 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-slate-200 flex flex-col">
+    <aside className="w-64 h-screen sticky top-0 self-start bg-white border-r border-slate-200 flex flex-col overflow-hidden">
 
       {/* Logo */}
       <div className="px-6 py-5 border-b border-slate-200">
-        <h2 className="text-xl font-bold text-slate-800">LIFE</h2>
-        <p className="text-xs text-slate-500 mt-0.5">Financial Progress Tracker</p>
+        <Logo showText />
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
@@ -67,7 +67,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom user section */}
-      <div className="px-3 py-4 border-t border-slate-200 space-y-2">
+      <div className="px-3 py-4 border-t border-slate-200 space-y-2 shrink-0">
         {email && (
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold shrink-0">

@@ -3,11 +3,14 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Search, UserPlus, X } from 'lucide-react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { getClientDisplayName } from './dataInformation.js'
 
 type Client = {
-  id: string | number
+  id?: string | number
+  client_id?: string | number
+  first_name?: string
+  last_name?: string
   client_name?: string
   email?: string
   status?: string
@@ -29,12 +32,13 @@ export default function ClientList({ clients = [] }: ClientListProps) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const filteredClients = clients.filter((client) => {
     const searchLower = search.toLowerCase()
+    const displayName = getClientDisplayName(client).toLowerCase()
+
     return (
-      client.client_name?.toLowerCase().includes(searchLower) ||
+      displayName.includes(searchLower) ||
       client.email?.toLowerCase().includes(searchLower)
     )
   })
@@ -44,21 +48,27 @@ export default function ClientList({ clients = [] }: ClientListProps) {
       setError('First name, last name, and email are required.')
       return
     }
+
     setLoading(true)
     setError('')
 
-    const { error: insertError } = await supabase
-      .from('clients')
-      .insert([{
+    const res = await fetch('/api/clients', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        client_name: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim(),
-        status
-      }])
+        status: status,
+      }),
+    })
 
-    if (insertError) {
-      setError('Failed to add client. ' + insertError.message)
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.error || 'Failed to add client.')
       setLoading(false)
       return
     }
@@ -70,7 +80,6 @@ export default function ClientList({ clients = [] }: ClientListProps) {
       setFirstName('')
       setLastName('')
       setEmail('')
-      setStatus('active')
       setSuccess(false)
       router.refresh()
     }, 1200)
@@ -81,7 +90,6 @@ export default function ClientList({ clients = [] }: ClientListProps) {
     setFirstName('')
     setLastName('')
     setEmail('')
-    setStatus('active')
     setError('')
     setSuccess(false)
   }
@@ -217,30 +225,30 @@ export default function ClientList({ clients = [] }: ClientListProps) {
       {/* Client Grid */}
       {filteredClients && filteredClients.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredClients.map((client: any) => (
-            <Link key={client.id} href={`/dashboard/clients/${client.id}`}>
-              <Card className="hover:shadow-md hover:border-slate-300 transition-all cursor-pointer">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">
-                      {client.client_name?.charAt(0) || '?'}
-                    </div>
-                    {client.client_name || 'Unnamed Client'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-1">
-                  <p className="text-sm text-slate-500">
-                    Status:
-                    <span className={`ml-1 font-medium ${client.status === 'active' ? 'text-green-600' : 'text-slate-400'}`}>
-                      {client.status || 'N/A'}
-                    </span>
-                  </p>
-                  <p className="text-sm text-slate-500">Email: {client.email || 'N/A'}</p>
-                  <p className="text-xs text-slate-400 mt-2">Click to view full profile →</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {filteredClients.map((client: Client) => {
+            const clientId = client.client_id ?? client.id
+            const displayName = getClientDisplayName(client)
+
+            return (
+              <Link key={String(clientId ?? client.email ?? displayName)} href={`/dashboard/clients/${clientId}`}>
+                <Card className="hover:shadow-md hover:border-slate-300 transition-all cursor-pointer">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">
+                        {displayName.charAt(0) || '?'}
+                      </div>
+                      {displayName}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <p className="text-sm text-slate-500">Email: {client.email || 'N/A'}</p>
+                    <p className="text-sm text-slate-500">Client ID: {clientId ?? 'N/A'}</p>
+                    <p className="text-xs text-slate-400 mt-2">Click to view full profile →</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
         </div>
       ) : (
         <Card>

@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CreditCard, TrendingUp, DollarSign, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import ClientEditForm from './ClientEditForm'
+import AddNoteForm from './AddNoteForm'
+import { createClient } from '@/lib/supabase/server'
 
 
 
@@ -19,6 +21,12 @@ type ClientInfo = {
   goal_net_income: number | null
   goal_net_worth: number | null
   goal_credit_score: number | null
+}
+
+type Note = {
+  id: number
+  content: string
+  created_at: string
 }
 
 export default async function ClientDetailPage({
@@ -54,6 +62,13 @@ export default async function ClientDetailPage({
   const metrics: any[] = []
   const loans: any[] = []
   const milestones: any[] = []
+
+  const supabase = await createClient()
+  const{data: notesData} = await supabase.from("notes").select("*").eq("client_id", Number(id))
+  const notes: Note[] = notesData || []
+
+  const sortedNotes = [...notes].sort( (a,b)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
 
   return (
     <div className="p-8">
@@ -175,33 +190,63 @@ export default async function ClientDetailPage({
           </CardContent>
         </Card>
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Loan Participation</CardTitle>
-          <CardDescription>Active and past loans</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loans.length > 0 ? (
-            <div className="space-y-2">
-              {loans.map((loan: any) => (
-                <div key={loan.id} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                  <span className="text-sm text-slate-700">{loan.loan_type || 'Loan'}</span>
-                  <span className="text-sm font-medium">${Number(loan.loan_amount).toLocaleString()}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${loan.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {loan.status}
-                  </span>
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Loan Participation</CardTitle>
+            <CardDescription>Active and past loans</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loans.length > 0 ? (
+              <div className="space-y-2">
+                {loans.map((loan: any) => (
+                  <div key={loan.id} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                    <span className="text-sm text-slate-700">{loan.loan_type || 'Loan'}</span>
+                    <span className="text-sm font-medium">${Number(loan.loan_amount).toLocaleString()}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${loan.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {loan.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400">
+                No loan data available (feature coming soon)
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-col items-start gap-2">
+
+            <div>
+              <CardTitle>Notes</CardTitle>
+              <CardDescription> </CardDescription>
+
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 overflow-x-auto pb-2">
+
+              <AddNoteForm clientId={client.id}/>
+                  {sortedNotes.map((note) => (
+                    <div key={note.id} className="min-w-[250px] rounded-lg border border-slate-200 p-4 bg-white shadow-sm">
+                      <p className="text-sm text-slate-700 mb-2">
+                        {note.content}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {new Date(note.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-slate-400">
-              No loan data available (feature coming soon)
-            </p>
-          )}
-        </CardContent>
-      </Card>
-      
+
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="mt-6">
         <Link
           href={`/dashboard/clients/${client.id}/edit`}
