@@ -8,6 +8,8 @@ import Link from 'next/link'
 import ClientEditForm from './ClientEditForm'
 import AddNoteForm from './AddNoteForm'
 import { createClient } from '@/lib/supabase/server'
+import NotesSection from './NotesSection'
+
 
 
 
@@ -24,8 +26,8 @@ type ClientInfo = {
 }
 
 type Note = {
-  id: number
-  content: string
+  note_id: number
+  note: string
   created_at: string
 }
 
@@ -228,20 +230,7 @@ export default async function ClientDetailPage({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 overflow-x-auto pb-2">
-
-              <AddNoteForm clientId={client.id}/>
-                  {sortedNotes.map((note) => (
-                    <div key={note.id} className="min-w-[250px] rounded-lg border border-slate-200 p-4 bg-white shadow-sm">
-                      <p className="text-sm text-slate-700 mb-2">
-                        {note.content}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(note.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-              ))}
-            </div>
+            <NotesSection notes={sortedNotes} clientId={client.id}/>
 
           </CardContent>
         </Card>
