@@ -60,7 +60,7 @@ export default function ImportClientsPage() {
             type="file"
             accept=".csv"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm border rounded-lg p-2"
+            className="block w-full text-sm border rounded-lg p-2 text-slate-500 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 

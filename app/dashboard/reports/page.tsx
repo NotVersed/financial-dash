@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { FileText, Download, FileSpreadsheet } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function ReportsPage() {
   const supabase = await createClient()
@@ -68,6 +69,12 @@ export default async function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+    <Link
+      href="/dashboard/clients/import"
+      className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+      Import CSV
+    </Link>
 
       <div className="mt-6">
         <Card>
