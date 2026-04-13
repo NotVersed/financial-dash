@@ -119,7 +119,7 @@ export default function ClientList({ clients = [] }: ClientListProps) {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
-            <button onClick={closeModal} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <button onClick={() => closeModal()} aria-label='close modal' className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
               <X className="w-5 h-5" />
             </button>
 
