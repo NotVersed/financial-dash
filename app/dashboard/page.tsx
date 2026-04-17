@@ -191,7 +191,7 @@ export default async function DashboardPage() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
       </div>
 
       {/* Stats */}
@@ -201,11 +201,11 @@ export default async function DashboardPage() {
           return (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row justify-between">
-                <CardTitle className="text-sm">{stat.title}</CardTitle>
+                <CardTitle className="text-sm text-slate-900">{stat.title}</CardTitle>
                 <Icon className="h-4 w-4" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
               </CardContent>
             </Card>
           )
@@ -220,7 +220,7 @@ export default async function DashboardPage() {
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-3 gap-4 text-slate-900">
           <Link href="/dashboard/clients">Clients</Link>
           <Link href="/dashboard/clients/new">Add Client</Link>
           <Link href="/dashboard/reports">Reports</Link>
