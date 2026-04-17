@@ -5,6 +5,7 @@ export type TimeSeriesMetrics = {
   avgIncome: number
   avgNetWorth: number
   avgCreditScore: number
+  totalClients: number 
 }
 
 type Bucket = {
@@ -12,9 +13,10 @@ type Bucket = {
   incomes: number[]
   worths: number[]
   scores: number[]
+  clients: number[]
 }
 
-// ISO week helper (no libraries)
+// ISO week helper
 function getISOWeek(date: Date) {
   const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
   const dayNum = temp.getUTCDay() || 7
@@ -31,16 +33,12 @@ function getBucketKey(date: Date, granularity: Granularity) {
   switch (granularity) {
     case 'day':
       return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-
     case 'week':
       return `${y}-W${getISOWeek(date)}`
-
     case 'month':
       return `${y}-${String(m).padStart(2, '0')}`
-
     case 'year':
       return `${y}`
-
     default:
       return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
   }
@@ -62,6 +60,7 @@ export function aggregateMetrics(
         incomes: [],
         worths: [],
         scores: [],
+        clients: [],
       })
     }
 
@@ -70,18 +69,16 @@ export function aggregateMetrics(
     bucket.incomes.push(m.avgIncome)
     bucket.worths.push(m.avgNetWorth)
     bucket.scores.push(m.avgCreditScore)
+    bucket.clients.push(m.totalClients) // ✅ NEW
   }
 
   return Array.from(map.values()).map(b => ({
     date: b.key,
-    avgIncome: Math.round(
-      b.incomes.reduce((a, v) => a + v, 0) / b.incomes.length
-    ),
-    avgNetWorth: Math.round(
-      b.worths.reduce((a, v) => a + v, 0) / b.worths.length
-    ),
-    avgCreditScore: Math.round(
-      b.scores.reduce((a, v) => a + v, 0) / b.scores.length
-    ),
+    avgIncome: Math.round(b.incomes.reduce((a, v) => a + v, 0) / b.incomes.length),
+    avgNetWorth: Math.round(b.worths.reduce((a, v) => a + v, 0) / b.worths.length),
+    avgCreditScore: Math.round(b.scores.reduce((a, v) => a + v, 0) / b.scores.length),
+
+    // CRITICAL: use LAST value (not average)
+    totalClients: b.clients[b.clients.length - 1],
   }))
 }

@@ -30,6 +30,7 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
       income: m.avgIncome,
       worth: m.avgNetWorth,
       score: m.avgCreditScore,
+      clients: m.totalClients,
     }))
   }, [metrics, granularity])
 
@@ -81,16 +82,7 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(v) =>
-                    granularity === 'day'
-                      ? new Date(v).toLocaleDateString()
-                      : v
-                  }
-                />
-
+                <XAxis dataKey="date" />
                 <YAxis domain={[500, 850]} />
                 <Tooltip />
                 <Area dataKey="score" stroke="#3b82f6" fillOpacity={0.2} />
@@ -112,8 +104,8 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
-                <YAxis tickFormatter={(v) => `$${v}`} />
-                <Tooltip formatter={(v) => `$${v}`} />
+                <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
+                <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
                 <Area dataKey="income" stroke="#22c55e" fillOpacity={0.2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -133,9 +125,33 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
-                <YAxis tickFormatter={(v) => `$${v}`} />
-                <Tooltip formatter={(v) => `$${v}`} />
+                <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
+                <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
                 <Area dataKey="worth" stroke="#10b981" fillOpacity={0.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Clients Growth */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Clients Over Time
+            </CardTitle>
+            <CardDescription>
+              Total number of clients in the system
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Area dataKey="clients" stroke="#8b5cf6" fillOpacity={0.2} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
