@@ -1,20 +1,22 @@
 export const dynamic = 'force-dynamic'
 
+import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import { cookies } from 'next/headers'
 import Link from 'next/link'
 import ClientEditForm from '../ClientEditForm'
 import { ArrowLeft } from 'lucide-react'
 
-
-
-type ClientInfo = {
+type Client = {
   id: number
-  client_name: string
+  first_name: string
+  last_name: string
+  email: string | null
+}
+
+type FinancialMetric = {
   current_credit_score: number | null
   current_net_worth: number | null
   current_net_income: number | null
-  notes: string | null
   goal_net_income: number | null
   goal_net_worth: number | null
   goal_credit_score: number | null
@@ -26,45 +28,55 @@ export default async function EditClientPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const cookieStore = await cookies()
+  const supabase = await createClient()
 
-  const res = await fetch(`http://localhost:3000/api/clients/${id}`, {
-    headers: {
-      cookie: cookieStore.toString(),
-    },
-    cache: 'no-store',
-  })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  if (res.status === 401) {
-    redirect('/login')
-  }
+  // 1. Get client (identity)
+  const { data: client, error: clientError } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('id', id)
+    .single()
 
-  if (res.status === 404) {
+  if (clientError || !client) {
     notFound()
   }
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch client info')
+  // 2. Get latest financial snapshot
+  const { data: metrics } = await supabase
+    .from('financial_metrics')
+    .select('*')
+    .eq('client_id', id)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  // 3. Merge into one object
+  const clientWithMetrics = {
+    ...client,
+    current_credit_score: metrics?.current_credit_score ?? null,
+    current_net_worth: metrics?.current_net_worth ?? null,
+    current_net_income: metrics?.current_net_income ?? null,
+    goal_net_income: metrics?.goal_net_income ?? null,
+    goal_net_worth: metrics?.goal_net_worth ?? null,
+    goal_credit_score: metrics?.goal_credit_score ?? null,
   }
 
-  const data: { clientInfo: ClientInfo } = await res.json()
-  const client = data.clientInfo
+  return (
+    <div className="p-8">
+      <div className="mb-6">
+        <Link
+          href={`/dashboard/clients/${id}`}
+          className="text-sm text-slate-600 hover:text-slate-900"
+        >
+          <ArrowLeft className="w-4 h-4 inline-block mr-1" />
+          Back to Client
+        </Link>
+      </div>
 
-  const metrics: any[] = []
-  const loans: any[] = []
-  const milestones: any[] = []
-
-    return (
-        <div className="p-8">
-            <div className="mb-6">
-            <Link
-                href={`/dashboard/clients/${id}`}
-                className="text-sm text-slate-600 hover:text-slate-900">
-            <ArrowLeft className="w-4 h-4 inline-block mr-1" />
-                Back to Client
-            </Link>
-        </div>
-            <ClientEditForm client={client} />
-        </div>
-    )
+      <ClientEditForm client={clientWithMetrics} />
+    </div>
+  )
 }
