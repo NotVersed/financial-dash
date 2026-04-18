@@ -118,6 +118,7 @@ export default async function AdminPage() {
       <UserAccountsCard
         userAccounts={userAccounts}
         hasError={Boolean(userAccountsError)}
+        currentUserId={user.id}
       />
 
       <DatabaseTablesCard tableStatuses={tableStatuses} />
