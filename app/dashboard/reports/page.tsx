@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { FileText, Download, FileSpreadsheet } from 'lucide-react'
+import { FileText, Download, FileSpreadsheet, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function ReportsPage() {
@@ -30,7 +30,7 @@ export default async function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 mb-4">
+            <p className="text-sm text-slate-500 mb-9">
               Exports credit scores, net income, net worth, and savings milestones for all clients.
             </p>
             <a
@@ -68,13 +68,31 @@ export default async function ReportsPage() {
             </a>
           </CardContent>
         </Card>
-      </div>
 
-    <Link
-      href="/dashboard/clients/import"
-      className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-      Import CSV
-    </Link>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Import Client Progress</CardTitle>
+                <CardDescription>All client financial data as CSV</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-500 mb-9">
+              Imports credit scores, net income, net worth, and savings milestones for all clients.
+            </p>
+            <Link
+              href="/dashboard/clients/import"
+              className= "flex items-center justify-center gap-2 w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+              Import CSV
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mt-6">
         <Card>

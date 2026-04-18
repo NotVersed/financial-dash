@@ -2,16 +2,19 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/app/api/server/serverClient'
 
 type ClientRow = {
-  firstName: string
-  lastName: string
+  clientId?: string
+  first_name: string
+  last_name: string
   email: string
-  dateOfBirth: string
-  currentCreditScore: string
-  currentNetWorth: string
-  currentNetIncome: string
-  goalCreditScore: string
-  goalNetWorth: string
-  goalNetIncome: string
+  client_dob: string
+  current_credit_score: string
+  current_net_worth: string
+  current_net_income: string
+  goal_credit_score: string
+  goal_net_worth: string
+  goal_net_income: string
+  created?: string
+  last_updated?: string
 }
 
 function parseCSV(text: string): ClientRow[] {
@@ -65,8 +68,8 @@ export async function POST(req: Request) {
       const row = rows[i]
       const rowNumber = i + 2
 
-      if (!row.firstName || !row.lastName || !row.email) {
-        errors.push(`Row ${rowNumber}: firstName, lastName, and email are required.`)
+      if (!row.first_name || !row.last_name || !row.email) {
+        errors.push(`Row ${rowNumber}: first_name, last_name, and email are required.`)
         continue
       }
 
@@ -75,16 +78,17 @@ export async function POST(req: Request) {
         continue
       }
 
-      const { data: existingClient, error: lookupError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('email', row.email)
-        .maybeSingle()
+    const { data: existingClient, error: lookupError } = await supabase
+      .from('clients')
+      .select('email')
+      .eq('email', row.email)
+      .maybeSingle()
 
-      if (lookupError) {
-        errors.push(`Row ${rowNumber}: database lookup failed.`)
-        continue
-      }
+    if (lookupError) {
+      console.error('Lookup error on row', rowNumber, lookupError)
+      errors.push(`Row ${rowNumber}: database lookup failed: ${lookupError.message}`)
+      continue
+    }
 
       if (existingClient) {
         errors.push(`Row ${rowNumber}: email "${row.email}" already exists.`)
@@ -92,16 +96,16 @@ export async function POST(req: Request) {
       }
 
       const insertPayload = {
-        first_name: row.firstName,
-        last_name: row.lastName,
+        first_name: row.first_name,
+        last_name: row.last_name,
         email: row.email,
-        date_of_birth: row.dateOfBirth || null,
-        current_credit_score: row.currentCreditScore ? Number(row.currentCreditScore) : null,
-        current_net_worth: row.currentNetWorth ? Number(row.currentNetWorth) : null,
-        current_net_income: row.currentNetIncome ? Number(row.currentNetIncome) : null,
-        goal_credit_score: row.goalCreditScore ? Number(row.goalCreditScore) : null,
-        goal_net_worth: row.goalNetWorth ? Number(row.goalNetWorth) : null,
-        goal_net_income: row.goalNetIncome ? Number(row.goalNetIncome) : null,
+        client_dob: row.client_dob || null,
+        current_credit_score: row.current_credit_score ? Number(row.current_credit_score) : null,
+        current_net_worth: row.current_net_worth ? Number(row.current_net_worth) : null,
+        current_net_income: row.current_net_income ? Number(row.current_net_income) : null,
+        goal_credit_score: row.goal_credit_score ? Number(row.goal_credit_score) : null,
+        goal_net_worth: row.goal_net_worth ? Number(row.goal_net_worth) : null,
+        goal_net_income: row.goal_net_income ? Number(row.goal_net_income) : null,
       }
 
       const { error: insertError } = await supabase.from('clients').insert(insertPayload)
