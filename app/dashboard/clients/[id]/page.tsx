@@ -8,6 +8,7 @@ import Link from 'next/link'
 import ClientEditForm from './ClientEditForm'
 import AddNoteForm from './AddNoteForm'
 import { createClient } from '@/lib/supabase/server'
+import DeleteClientButton from './DeleteClientButton'
 
 
 
@@ -247,13 +248,18 @@ export default async function ClientDetailPage({
         </Card>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <Link
           href={`/dashboard/clients/${client.id}/edit`}
           className="inline-block rounded-md bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800"
         >
           Edit Client Information
         </Link>
+
+        <DeleteClientButton
+          clientId={client.id}
+          clientName={client.client_name || `Client #${client.id}`}
+        />
       </div>
 
     </div>

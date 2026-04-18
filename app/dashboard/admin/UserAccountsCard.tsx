@@ -41,16 +41,22 @@ export default function UserAccountsCard({ userAccounts, hasError, currentUserId
   const [passwordSubmitting, setPasswordSubmitting] = useState(false)
   const [passwordModalError, setPasswordModalError] = useState<string | null>(null)
 
+  const normalizeRole = (role: string | null) => {
+    if (!role || role === 'user') {
+      return 'employee'
+    }
+
+    return role
+  }
+
   const roleOptions = useMemo(() => {
     const roles = new Set<string>()
     userAccounts?.forEach((account) => {
-      if (account.role) {
-        roles.add(account.role)
-      }
+      roles.add(normalizeRole(account.role))
     })
 
     roles.add('admin')
-    roles.add('user')
+    roles.add('employee')
 
     return ['all', ...Array.from(roles).sort((a, b) => a.localeCompare(b))]
   }, [userAccounts])
@@ -65,7 +71,7 @@ export default function UserAccountsCard({ userAccounts, hasError, currentUserId
     return userAccounts.filter((account) => {
       const displayName = account.full_name?.trim() || ''
       const email = account.email || ''
-      const role = account.role || 'user'
+      const role = normalizeRole(account.role)
       const isAuthenticated = Boolean(account.is_active)
       const isActive = Boolean(account.is_active)
 
@@ -92,7 +98,7 @@ export default function UserAccountsCard({ userAccounts, hasError, currentUserId
   }, [authFilter, roleFilter, searchQuery, statusFilter, userAccounts])
 
   const getDraftRole = (account: UserAccount) => {
-    return roleDrafts[account.id] ?? account.role ?? 'user'
+    return roleDrafts[account.id] ?? normalizeRole(account.role)
   }
 
   const setMessage = (message: string | null, type: 'error' | 'success') => {
@@ -148,7 +154,7 @@ export default function UserAccountsCard({ userAccounts, hasError, currentUserId
 
   const handleRoleSave = async (account: UserAccount) => {
     const selectedRole = getDraftRole(account).trim()
-    const currentRole = (account.role ?? 'user').trim()
+    const currentRole = normalizeRole(account.role).trim()
 
     if (selectedRole === currentRole) {
       setMessage('No role change to save.', 'error')
@@ -368,7 +374,7 @@ export default function UserAccountsCard({ userAccounts, hasError, currentUserId
                   ) : (
                     filteredUsers.map((account) => {
                       const displayName = account.full_name?.trim() || account.email || account.id
-                      const role = account.role || 'user'
+                      const role = normalizeRole(account.role)
                       const isAuthenticated = Boolean(account.is_active)
                       const isSelf = account.id === currentUserId
                       const draftRole = getDraftRole(account)

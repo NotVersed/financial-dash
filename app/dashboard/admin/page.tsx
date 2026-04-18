@@ -11,6 +11,16 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { data: currentProfile, error: currentProfileError } = await supabase
+    .from('users')
+    .select('role, is_active')
+    .eq('id', user.id)
+    .single()
+
+  if (currentProfileError || !currentProfile || currentProfile.role !== 'admin' || currentProfile.is_active !== true) {
+    redirect('/dashboard')
+  }
+
   const databaseTables = ['users', 'clients', 'financial_info'] as const
 
   const tableStatuses = await Promise.all(
