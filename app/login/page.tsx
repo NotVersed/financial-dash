@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
+import { Logo } from '@/components/shared/Logo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -87,7 +88,7 @@ export default function LoginPage() {
 
       {/* Logo/Brand */}
       <div className="absolute top-8 left-8">
-        <h2 className="text-2xl font-bold text-slate-800">LIFE</h2>
+        <Logo size={50} showText />
       </div>
 
       <Card className="w-full max-w-md shadow-2xl border-slate-200">
