@@ -2,23 +2,49 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ShieldCheck, Users, Database, Activity } from 'lucide-react'
+import CreateAdminAccountCard from './CreateAdminAccountCard'
+import UserAccountsCard from './UserAccountsCard'
+import DatabaseTablesCard from './DatabaseTablesCard'
 
 export default async function AdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { count: totalClients } = await supabase
-    .from('clients')
-    .select('*', { count: 'exact', head: true })
+  const { data: currentProfile, error: currentProfileError } = await supabase
+    .from('users')
+    .select('role, is_active')
+    .eq('id', user.id)
+    .single()
 
-  const { count: totalMetrics } = await supabase
-    .from('financial_metrics')
-    .select('*', { count: 'exact', head: true })
+  if (currentProfileError || !currentProfile || currentProfile.role !== 'admin' || currentProfile.is_active !== true) {
+    redirect('/dashboard')
+  }
 
-  const { count: totalMilestones } = await supabase
-    .from('milestones')
-    .select('*', { count: 'exact', head: true })
+  const databaseTables = ['users', 'clients', 'financial_info'] as const
+
+  const tableStatuses = await Promise.all(
+    databaseTables.map(async (table) => {
+      const { count, error } = await supabase
+        .from(table)
+        .select('*', { count: 'exact', head: true })
+
+      return {
+        table,
+        available: !error,
+        count: count ?? 0,
+      }
+    })
+  )
+
+  const { data: userAccounts, error: userAccountsError } = await supabase
+    .from('users')
+    .select('id, email, full_name, role, is_active, created_at')
+    .order('created_at', { ascending: false })
+
+  const totalUsers = tableStatuses.find(({ table }) => table === 'users')?.count ?? 0
+  const totalClients = tableStatuses.find(({ table }) => table === 'clients')?.count ?? 0
+  const totalFinancialRecords = tableStatuses.find(({ table }) => table === 'financial_info')?.count ?? 0
 
   return (
     <div className="p-8">
@@ -40,7 +66,7 @@ export default async function AdminPage() {
             <Users className="w-4 h-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalClients ?? 0}</div>
+            <div className="text-2xl text-green-600 font-bold">{totalClients ?? 0}</div>
             <p className="text-xs text-slate-500 mt-1">Registered in the system</p>
           </CardContent>
         </Card>
@@ -51,22 +77,24 @@ export default async function AdminPage() {
             <Database className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalMetrics ?? 0}</div>
-            <p className="text-xs text-slate-500 mt-1">Metric entries recorded</p>
+            <div className="text-2xl text-green-600 font-bold">{totalFinancialRecords}</div>
+            <p className="text-xs text-slate-500 mt-1">Entries in `financial_info`</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Milestones</CardTitle>
+            <CardTitle className="text-sm font-medium">System Users</CardTitle>
             <Activity className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalMilestones ?? 0}</div>
-            <p className="text-xs text-slate-500 mt-1">Total achievements logged</p>
+            <div className="text-2xl text-green-600 font-bold">{totalUsers}</div>
+            <p className="text-xs text-slate-500 mt-1">Profiles in the `users` table</p>
           </CardContent>
         </Card>
       </div>
+
+      <CreateAdminAccountCard />
 
       {/* Current Admin */}
       <Card className="mb-6">
@@ -97,30 +125,13 @@ export default async function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* Database Info */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Database className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Database Tables</CardTitle>
-              <CardDescription>Connected Supabase tables</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {['clients', 'financial_metrics', 'loan_participation', 'milestones'].map((table) => (
-              <div key={table} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                <span className="text-sm font-mono text-slate-700">{table}</span>
-                <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Connected</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <UserAccountsCard
+        userAccounts={userAccounts}
+        hasError={Boolean(userAccountsError)}
+        currentUserId={user.id}
+      />
+
+      <DatabaseTablesCard tableStatuses={tableStatuses} />
     </div>
   )
 }

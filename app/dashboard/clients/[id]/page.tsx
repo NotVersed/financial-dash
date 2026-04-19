@@ -10,6 +10,7 @@ import AddNoteForm from './AddNoteForm'
 import { createClient } from '@/lib/supabase/server'
 import NotesSection from './NotesSection'
 
+import DeleteClientButton from './DeleteClientButton'
 
 
 
@@ -72,6 +73,14 @@ export default async function ClientDetailPage({
   const sortedNotes = [...notes].sort( (a,b)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
 
+  console.log(
+  sortedNotes.map((note, index) => ({
+    index,
+    id: note.id,
+    content: note.content,
+    created_at: note.created_at,
+  }))
+)
   return (
     <div className="p-8">
       <Link
@@ -236,13 +245,18 @@ export default async function ClientDetailPage({
         </Card>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <Link
           href={`/dashboard/clients/${client.id}/edit`}
           className="inline-block rounded-md bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800"
         >
           Edit Client Information
         </Link>
+
+        <DeleteClientButton
+          clientId={client.id}
+          clientName={client.client_name || `Client #${client.id}`}
+        />
       </div>
 
     </div>
