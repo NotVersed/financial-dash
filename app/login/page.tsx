@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +16,8 @@ export default function LoginPage() {
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false)
   const [resetSent, setResetSent] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const deactivated = searchParams.get('deactivated') === '1'
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,6 +104,12 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
+          {deactivated && !error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              Account deactivated, please contact your administrator.
+            </div>
+          )}
+
           {forgotPasswordMode ? (
             <form onSubmit={handleForgotPassword} className="space-y-5">
               {resetSent ? (

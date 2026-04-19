@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Users, FileText, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
 import { Logo } from './shared/Logo'
 
 const navItems = [
@@ -15,19 +14,22 @@ const navItems = [
   { href: '/dashboard/admin', label: 'Admin', icon: ShieldCheck },
 ]
 
-export default function Sidebar() {
+type SidebarProps = {
+  userEmail: string
+  isAdmin: boolean
+}
+
+export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [email, setEmail] = useState('')
 
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email) setEmail(user.email)
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.href === '/dashboard/admin' && !isAdmin) {
+      return false
     }
-    getUser()
-  }, [])
+
+    return true
+  })
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -46,7 +48,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
           return (
@@ -68,12 +70,12 @@ export default function Sidebar() {
 
       {/* Bottom user section */}
       <div className="px-3 py-4 border-t border-slate-200 space-y-2 shrink-0">
-        {email && (
+        {userEmail && (
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {email.charAt(0).toUpperCase()}
+              {userEmail.charAt(0).toUpperCase()}
             </div>
-            <span className="text-xs text-slate-500 truncate">{email}</span>
+            <span className="text-xs text-slate-500 truncate">{userEmail}</span>
           </div>
         )}
 

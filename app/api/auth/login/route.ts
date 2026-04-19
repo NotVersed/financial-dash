@@ -24,6 +24,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
 
+    const userId = data.user?.id;
+    if (!userId) {
+      return NextResponse.json({ error: "Login failed" }, { status: 401 });
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("is_active")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileError) {
+      await supabase.auth.signOut();
+      return NextResponse.json({ error: "Login failed" }, { status: 401 });
+    }
+
+    if (profile && profile.is_active === false) {
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        {
+          error:
+            "Account deactivated, please contact your administrator.",
+        },
+        { status: 403 },
+      );
+    }
+
     return NextResponse.json({
       user: { id: data.user.id, email: data.user.email },
     });

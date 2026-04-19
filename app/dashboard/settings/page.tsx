@@ -8,6 +8,17 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role, is_active')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const roleLabel = profile?.role
+    ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
+    : 'Employee'
+  const isActive = profile?.is_active !== false
+
   return (
     <div className="p-8">
       <div className="mb-6">
@@ -37,7 +48,7 @@ export default async function SettingsPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-900">{user.email}</p>
-                <p className="text-xs text-slate-500">Administrator</p>
+                <p className="text-xs text-slate-500">{roleLabel}</p>
               </div>
             </div>
           </CardContent>
@@ -64,6 +75,10 @@ export default async function SettingsPage() {
             <div className="flex justify-between items-center py-2 border-b border-slate-100">
               <span className="text-sm text-slate-500">User ID</span>
               <span className="text-xs font-mono text-slate-500">{user.id}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-slate-100">
+              <span className="text-sm text-slate-500">Role</span>
+              <span className="text-sm font-medium text-slate-900">{roleLabel}</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-slate-500">Last Sign In</span>
@@ -92,8 +107,14 @@ export default async function SettingsPage() {
           <CardContent>
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-slate-500">Authentication</span>
-              <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
-                Active
+              <span
+                className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  isActive
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                }`}
+              >
+                {isActive ? 'Active' : 'Deactivated'}
               </span>
             </div>
           </CardContent>

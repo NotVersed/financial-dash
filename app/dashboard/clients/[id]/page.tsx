@@ -8,6 +8,9 @@ import Link from 'next/link'
 import ClientEditForm from './ClientEditForm'
 import AddNoteForm from './AddNoteForm'
 import { createClient } from '@/lib/supabase/server'
+import NotesSection from './NotesSection'
+
+import DeleteClientButton from './DeleteClientButton'
 
 
 
@@ -24,8 +27,8 @@ type ClientInfo = {
 }
 
 type Note = {
-  id: number
-  content: string
+  note_id: number
+  note: string
   created_at: string
 }
 
@@ -70,6 +73,14 @@ export default async function ClientDetailPage({
   const sortedNotes = [...notes].sort( (a,b)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
 
+  console.log(
+  sortedNotes.map((note, index) => ({
+    index,
+    id: note.id,
+    content: note.content,
+    created_at: note.created_at,
+  }))
+)
   return (
     <div className="p-8">
       <Link
@@ -228,32 +239,24 @@ export default async function ClientDetailPage({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 overflow-x-auto pb-2">
-
-              <AddNoteForm clientId={client.id}/>
-                  {sortedNotes.map((note) => (
-                    <div key={note.id} className="min-w-[250px] rounded-lg border border-slate-200 p-4 bg-white shadow-sm">
-                      <p className="text-sm text-slate-700 mb-2">
-                        {note.content}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(note.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-              ))}
-            </div>
+            <NotesSection notes={sortedNotes} clientId={client.id}/>
 
           </CardContent>
         </Card>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <Link
           href={`/dashboard/clients/${client.id}/edit`}
           className="inline-block rounded-md bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800"
         >
           Edit Client Information
         </Link>
+
+        <DeleteClientButton
+          clientId={client.id}
+          clientName={client.client_name || `Client #${client.id}`}
+        />
       </div>
 
     </div>

@@ -1,148 +1,163 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { AreaChart, BarChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useMemo, useState } from 'react'
 
-const creditScoreData = [
-  { month: 'Jan', score: 580 },
-  { month: 'Feb', score: 595 },
-  { month: 'Mar', score: 610 },
-  { month: 'Apr', score: 605 },
-  { month: 'May', score: 625 },
-  { month: 'Jun', score: 640 },
-  { month: 'Jul', score: 638 },
-  { month: 'Aug', score: 655 },
-]
+import {
+  Card, CardContent, CardHeader, CardTitle, CardDescription
+} from '@/components/ui/card'
 
-const incomeData = [
-  { month: 'Jan', income: 2200 },
-  { month: 'Feb', income: 2400 },
-  { month: 'Mar', income: 2350 },
-  { month: 'Apr', income: 2600 },
-  { month: 'May', income: 2750 },
-  { month: 'Jun', income: 2900 },
-  { month: 'Jul', income: 3100 },
-  { month: 'Aug', income: 3250 },
-]
+import {
+  AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts'
 
-const netWorthData = [
-  { month: 'Jan', worth: 5000 },
-  { month: 'Feb', worth: 5400 },
-  { month: 'Mar', worth: 5200 },
-  { month: 'Apr', worth: 6100 },
-  { month: 'May', worth: 6800 },
-  { month: 'Jun', worth: 7200 },
-  { month: 'Jul', worth: 7800 },
-  { month: 'Aug', worth: 8500 },
-]
+import type { TimeSeriesMetrics } from '../components/timeSeriesAggregation'
+import { aggregateMetrics, type Granularity } from '../components/timeSeriesAggregation'
 
-const distributionData = [
-  { range: '300-499', clients: 3 },
-  { range: '500-599', clients: 8 },
-  { range: '600-649', clients: 12 },
-  { range: '650-699', clients: 15 },
-  { range: '700-749', clients: 10 },
-  { range: '750+', clients: 6 },
-]
+type DashboardChartsProps = {
+  metrics?: TimeSeriesMetrics[]
+}
 
-export default function DashboardCharts() {
+export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) {
+
+  const [granularity, setGranularity] = useState<Granularity>('month')
+
+  const chartData = useMemo(() => {
+    const aggregated = aggregateMetrics(metrics, granularity)
+
+    return aggregated.map(m => ({
+      date: m.date,
+      income: m.avgIncome,
+      worth: m.avgNetWorth,
+      score: m.avgCreditScore,
+      clients: m.totalClients,
+    }))
+  }, [metrics, granularity])
+
+  if (chartData.length === 0) {
+    return (
+      <p className="text-sm text-slate-400 mb-8">
+        No financial data yet (add metrics to see trends)
+      </p>
+    )
+  }
+
+  const granularityOptions: Granularity[] = ['day', 'week', 'month', 'year']
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div className="space-y-4 mb-8">
 
-      {/* Credit Score Trend */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Credit Score Trend</CardTitle>
-          <CardDescription>Average across all clients over time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={creditScoreData}>
-              <defs>
-                <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} domain={[500, 700]} />
-              <Tooltip formatter={(v) => [`${v}`, 'Avg Credit Score']} />
-              <Area type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={2} fill="url(#colorScore)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Controls */}
+      <div className="flex gap-2">
+        {granularityOptions.map(option => (
+          <button
+            key={option}
+            onClick={() => setGranularity(option)}
+            className={`px-3 py-1 rounded text-sm border ${
+              granularity === option
+                ? 'bg-black text-white'
+                : 'bg-white text-black'
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
 
-      {/* Net Income Growth */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Net Income Growth</CardTitle>
-          <CardDescription>Average monthly net income across clients</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={incomeData}>
-              <defs>
-                <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
-              <Tooltip formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Net Income']} />
-              <Area type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={2} fill="url(#colorIncome)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Charts grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      {/* Net Worth Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Net Worth Progress</CardTitle>
-          <CardDescription>Average client net worth growth</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={netWorthData}>
-              <defs>
-                <linearGradient id="colorWorth" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
-              <Tooltip formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Net Worth']} />
-              <Area type="monotone" dataKey="worth" stroke="#10b981" strokeWidth={2} fill="url(#colorWorth)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        {/* Credit Score */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Credit Score Trend
+            </CardTitle>
+            <CardDescription>
+              Average across all clients over time
+            </CardDescription>
+          </CardHeader>
 
-      {/* Credit Score Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Credit Score Distribution</CardTitle>
-          <CardDescription>Number of clients per score range</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={distributionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v) => [`${v}`, 'Clients']} />
-              <Bar dataKey="clients" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis domain={[500, 850]} />
+                <Tooltip />
+                <Area dataKey="score" stroke="#3b82f6" fillOpacity={0.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
+        {/* Income */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Net Income Growth
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
+                <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
+                <Area dataKey="income" stroke="#22c55e" fillOpacity={0.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Net Worth */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Net Worth Progress
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
+                <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
+                <Area dataKey="worth" stroke="#10b981" fillOpacity={0.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Clients Growth */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Clients Over Time
+            </CardTitle>
+            <CardDescription>
+              Total number of clients in the system
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Area dataKey="clients" stroke="#8b5cf6" fillOpacity={0.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+      </div>
     </div>
   )
 }
