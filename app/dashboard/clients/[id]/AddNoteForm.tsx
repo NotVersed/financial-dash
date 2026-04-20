@@ -41,7 +41,7 @@ export default function AddNoteForm({ clientId }: { clientId: number }) {
     {!open ? (
       <button
         onClick={() => setOpen(true)}
-        className="w-full h-full rounded-lg border border-dashed border-slate-300 p-4 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition"
+        className="w-full h-full rounded-lg border border-dashed border-slate-300 p-4 flex items-center justify-center text-slate-900 hover:bg-slate-50 transition"
       >
         + Add Note
       </button>
@@ -51,7 +51,7 @@ export default function AddNoteForm({ clientId }: { clientId: number }) {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Write a note..."
-          className="border rounded-md px-2 py-1 text-sm"
+          className="border rounded-md px-2 py-1 text-sm text-slate-600"
         />
 
         <button
