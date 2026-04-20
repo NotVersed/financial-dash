@@ -82,7 +82,17 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis 
+		   dataKey="date"
+		   tickFormatter={(value) =>{
+		      if(granularity === 'month'){
+                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+			 const date=new Date(value)
+			 return monthNames[date.getMonth()]
+		      }
+		      return value
+	            }}
+		 />
                 <YAxis domain={[500, 850]} />
                 <Tooltip />
                 <Area dataKey="score" stroke="#3b82f6" fillOpacity={0.2} />
@@ -103,7 +113,17 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis 
+		      dataKey="date"
+		   tickFormatter={(value) =>{
+		      if(granularity === 'month'){
+                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+			 const date=new Date(value)
+			 return monthNames[date.getMonth()]
+		      }
+		      return value
+	            }}
+		 />
                 <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
                 <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
                 <Area dataKey="income" stroke="#22c55e" fillOpacity={0.2} />
@@ -124,7 +144,17 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis 
+		       dataKey="date"
+		   tickFormatter={(value) =>{
+		      if(granularity === 'month'){
+                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+			 const date=new Date(value)
+			 return monthNames[date.getMonth()]
+		      }
+		      return value
+	            }}
+		/>
                 <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
                 <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
                 <Area dataKey="worth" stroke="#10b981" fillOpacity={0.2} />
@@ -148,7 +178,17 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis 
+		     dataKey="date"
+		   tickFormatter={(value) =>{
+		      if(granularity === 'month'){
+                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+			 const date=new Date(value)
+			 return monthNames[date.getMonth()]
+		      }
+		      return value
+	            }}
+		/>
                 <YAxis />
                 <Tooltip />
                 <Area dataKey="clients" stroke="#8b5cf6" fillOpacity={0.2} />
