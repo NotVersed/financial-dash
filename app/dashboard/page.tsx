@@ -238,6 +238,8 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* View Clients */}
             <Link
               href="/dashboard/clients"
               className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700"
@@ -246,14 +248,16 @@ export default async function DashboardPage() {
               <span className="text-sm font-medium">View All Clients</span>
             </Link>
 
+            {/* FIXED: links to clients so they can add a client */}
             <Link
-              href="/dashboard/clients/new"
+              href="/dashboard/clients"
               className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700"
             >
               <TrendingUp className="h-6 w-6" />
               <span className="text-sm font-medium">Add New Client</span>
             </Link>
 
+            {/* Reports */}
             <Link
               href="/dashboard/reports"
               className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700"
@@ -261,6 +265,7 @@ export default async function DashboardPage() {
               <PiggyBank className="h-6 w-6" />
               <span className="text-sm font-medium">Generate Report</span>
             </Link>
+
           </div>
         </CardContent>
       </Card>
