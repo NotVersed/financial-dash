@@ -28,9 +28,15 @@ function calculateAverage(values: Array<number | string | null | undefined>) {
   return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length)
 }
 
+/**
+ * 🚀 NOW USING MATERIALIZED VIEW (NO RAW TIME SERIES LOGIC HERE)
+ */
 async function getDashboardStats() {
   const supabase = await createClient()
 
+  // -------------------------
+  // BASIC METRICS
+  // -------------------------
   const { count: totalClients } = await supabase
     .from(CLIENT_TABLE_NAME)
     .select('*', { count: 'exact', head: true })
@@ -50,6 +56,9 @@ async function getDashboardStats() {
   const avgNetIncome = calculateAverage(metricRows.map(r => r.current_net_income))
   const avgNetWorth = calculateAverage(metricRows.map(r => r.current_net_worth))
 
+  // -------------------------
+  // LOANS / MILESTONES
+  // -------------------------
   const { data: loans } = await supabase
     .from('loan_participation')
     .select('loan_amount')
@@ -64,67 +73,20 @@ async function getDashboardStats() {
     .select('*', { count: 'exact', head: true })
 
   // -------------------------
-  // FINANCIAL METRICS (WITH CLIENT GROWTH)
+  // 🚀 TIME SERIES NOW COMES FROM MATERIALIZED VIEW
   // -------------------------
-  const { data: rawMetrics } = await supabase
-    .from('financial_info')
-    .select('measurement_date, net_income, net_worth, credit_score, client_id')
-    .order('measurement_date', { ascending: true })
+  const { data: snapshotData } = await supabase
+    .from('financial_snapshots') // 👈 MATERIALIZED VIEW
+    .select('date, avg_income, avg_net_worth, avg_credit_score, total_clients')
+    .order('date', { ascending: true })
 
-  const metricsByDate = new Map<string, {
-    date: string
-    incomes: number[]
-    worths: number[]
-    scores: number[]
-    clients: Set<string>
-  }>()
-
-  const seenClients = new Set<string>()
-
-  for (const row of rawMetrics ?? []) {
-    if (!row.measurement_date) continue
-
-    const date = new Date(row.measurement_date).toISOString().split('T')[0]
-
-    if (!metricsByDate.has(date)) {
-      metricsByDate.set(date, {
-        date,
-        incomes: [],
-        worths: [],
-        scores: [],
-        clients: new Set(),
-      })
-    }
-
-    const bucket = metricsByDate.get(date)!
-
-    if (row.net_income != null) bucket.incomes.push(Number(row.net_income))
-    if (row.net_worth != null) bucket.worths.push(Number(row.net_worth))
-    if (row.credit_score != null) bucket.scores.push(Number(row.credit_score))
-
-    if (row.client_id) {
-      seenClients.add(row.client_id)
-    }
-
-    bucket.clients = new Set(seenClients)
-  }
-
-  const dailyMetrics: TimeSeriesMetrics[] = Array.from(metricsByDate.values()).map(d => ({
-    date: d.date,
-    avgIncome: d.incomes.length
-      ? Math.round(d.incomes.reduce((a, b) => a + b, 0) / d.incomes.length)
-      : 0,
-    avgNetWorth: d.worths.length
-      ? Math.round(d.worths.reduce((a, b) => a + b, 0) / d.worths.length)
-      : 0,
-    avgCreditScore: d.scores.length
-      ? Math.round(d.scores.reduce((a, b) => a + b, 0) / d.scores.length)
-      : 0,
-    totalClients: d.clients.size,
+  const aggregatedMetrics: TimeSeriesMetrics[] = (snapshotData ?? []).map(row => ({
+    date: row.date,
+    avgIncome: row.avg_income,
+    avgNetWorth: row.avg_net_worth,
+    avgCreditScore: row.avg_credit_score,
+    totalClients: row.total_clients,
   }))
-
-  const granularity: Granularity = 'month'
-  const aggregatedMetrics = aggregateMetrics(dailyMetrics, granularity)
 
   return {
     totalClients: totalClients || 0,
@@ -135,6 +97,8 @@ async function getDashboardStats() {
     totalLoansAmount,
     totalLoansCount,
     milestonesCount: milestonesCount || 0,
+
+    // already clean from SQL
     aggregatedMetrics,
   }
 }
@@ -198,7 +162,6 @@ export default async function DashboardPage() {
   return (
     <div className="p-8 text-slate-900">
 
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">LIFE Dashboard</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -227,7 +190,7 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      {/* Charts */}
+      {/* Charts (now clean SQL output) */}
       <DashboardCharts metrics={stats.aggregatedMetrics} />
 
       {/* Quick Actions */}
@@ -239,7 +202,6 @@ export default async function DashboardPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-            {/* View Clients */}
             <Link
               href="/dashboard/clients"
               className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700"
@@ -248,7 +210,6 @@ export default async function DashboardPage() {
               <span className="text-sm font-medium">View All Clients</span>
             </Link>
 
-            {/* FIXED: links to clients so they can add a client */}
             <Link
               href="/dashboard/clients"
               className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700"
@@ -257,7 +218,6 @@ export default async function DashboardPage() {
               <span className="text-sm font-medium">Add New Client</span>
             </Link>
 
-            {/* Reports */}
             <Link
               href="/dashboard/reports"
               className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700"
