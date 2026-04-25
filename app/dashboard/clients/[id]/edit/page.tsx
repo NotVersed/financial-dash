@@ -56,6 +56,8 @@ export default async function EditClientPage({
   // 3. Merge into one object
   const clientWithMetrics = {
     ...client,
+    id: client.client_id,
+    client_name: `${client.first_name ?? ''} ${client.last_name ?? ''}`.trim(),
     current_credit_score: metrics?.current_credit_score ?? null,
     current_net_worth: metrics?.current_net_worth ?? null,
     current_net_income: metrics?.current_net_income ?? null,
