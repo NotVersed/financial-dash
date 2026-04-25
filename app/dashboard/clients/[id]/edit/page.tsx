@@ -37,7 +37,7 @@ export default async function EditClientPage({
   const { data: client, error: clientError } = await supabase
     .from('clients')
     .select('*')
-    .eq('id', id)
+    .eq('client_id', id)
     .single()
 
   if (clientError || !client) {

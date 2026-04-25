@@ -518,7 +518,7 @@ export default function UserAccountsCard({ userAccounts, hasError, currentUserId
 
               <div>
                 <label htmlFor="admin-reset-password" className="mb-1 block text-sm font-medium text-slate-700">
-                  New Temporary Password
+                  New Password
                 </label>
                 <input
                   id="admin-reset-password"
