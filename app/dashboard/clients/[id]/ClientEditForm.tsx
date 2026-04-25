@@ -1,10 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-<<<<<<< HEAD
 import { useRouter } from 'next/navigation'
-=======
->>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CreditCard, TrendingUp, DollarSign } from 'lucide-react'
 import Link from 'next/link'
@@ -29,11 +26,25 @@ type Props = {
 }
 
 export default function ClientEditForm({ client }: Props) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    first_name: string
+    last_name: string
+    email: string
+    status: string
+    current_credit_score: string | number
+    current_net_worth: string | number
+    current_net_income: string | number
+    goal_credit_score: string | number
+    goal_net_worth: string | number
+    goal_net_income: string | number
+    notes: string
+  }>({
     first_name: client.first_name ?? '',
     last_name: client.last_name ?? '',
     email: client.email ?? '',
@@ -47,15 +58,11 @@ export default function ClientEditForm({ client }: Props) {
     notes: client.notes ?? '',
   })
 
-<<<<<<< HEAD
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
-=======
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
->>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
     const { name, value } = e.target
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }))
@@ -108,13 +115,10 @@ export default function ClientEditForm({ client }: Props) {
 
     const res = await fetch(`/api/clients/${client.id}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
 
-    // safe JSON parsing (no crash on empty response)
     const text = await res.text()
     const data = text ? JSON.parse(text) : null
 
@@ -127,6 +131,7 @@ export default function ClientEditForm({ client }: Props) {
 
     startTransition(() => {
       router.push(`/dashboard/clients/${client.id}`)
+      router.refresh() // ensures fresh data after navigation
     })
   }
 
@@ -137,228 +142,144 @@ export default function ClientEditForm({ client }: Props) {
           <CardTitle className="text-xl font-semibold text-slate-900">
             Edit Client Information
           </CardTitle>
-<<<<<<< HEAD
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Client Name */}
-          <div>
-            <label htmlFor="client_name" className="mb-2 block text-sm font-medium text-slate-700">
-              Client Name
-            </label>
 
-            <input
-              id="client_name"
-              name="client_name"
-              type="text"
-              value={formData.client_name}
-              onChange={handleChange}
-              className="w-full rounded-md border-slate-300 bg-white px-3 py-2 text-lg font-semibold text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-            />
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                First Name *
+              </label>
+              <input
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className="w-full input"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Last Name *
+              </label>
+              <input
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="w-full input"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Email *
+              </label>
+              <input
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full input"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full input"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
           </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {/* Financial Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             {/* Credit Score */}
-            <Card className="border-slate-200 shadow-sm">
+            <Card>
               <CardContent className="pt-6">
-                <div className="mb-3 flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-700">
-                      Credit Score
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Current recorded score
-                    </p>
-=======
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="first_name" className="mb-2 block text-sm font-medium text-slate-700">
-                  First Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="first_name"
-                  name="first_name"
-                  type="text"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="last_name" className="mb-2 block text-sm font-medium text-slate-700">
-                  Last Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="last_name"
-                  name="last_name"
-                  type="text"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">
-                  Email Address <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label htmlFor="status" className="mb-2 block text-sm font-medium text-slate-700">
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-              
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <Card className="border-slate-200 shadow-sm">
-                <CardContent className="pt-6">
-                  <div className="mb-3 flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">
-                        Credit Score
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Current recorded score
-                      </p>
-                    </div>
-                    <CreditCard className="w-5 h-5 text-blue-500" />
->>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
-                  </div>
+                <div className="flex justify-between mb-3">
+                  <p className="text-sm font-medium">Credit Score</p>
                   <CreditCard className="w-5 h-5 text-blue-500" />
                 </div>
-
-<<<<<<< HEAD
                 <input
-                  id="current_credit_score"
                   name="current_credit_score"
                   type="number"
                   value={formData.current_credit_score}
                   onChange={handleChange}
-                  className="w-full rounded-md border-slate-300 bg-white px-3 py-2 text-3xl font-semibold text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  className="w-full input text-2xl"
                 />
               </CardContent>
             </Card>
-=======
-                  <label htmlFor="current_credit_score" className="sr-only">
-                    Current Credit Score
-                  </label>
-                  <input
-                    id="current_credit_score"
-                    name="current_credit_score"
-                    type="number"
-                    value={formData.current_credit_score}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-3xl font-bold text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                  />
-                </CardContent> 
-              </Card>
->>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
 
-            {/* Net Income */}
-            <Card className="border-slate-200 shadow-sm">
+            {/* Income */}
+            <Card>
               <CardContent className="pt-6">
-                <div className="mb-3 flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-700">
-                      Net Income
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Current recorded income
-                    </p>
-                  </div>
-                  <TrendingUp className="h-5 w-5 text-green-500" />
+                <div className="flex justify-between mb-3">
+                  <p className="text-sm font-medium">Net Income</p>
+                  <TrendingUp className="w-5 h-5 text-green-500" />
                 </div>
-
                 <input
                   name="current_net_income"
                   type="number"
                   value={formData.current_net_income}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-3xl font-bold text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  className="w-full input text-2xl"
                 />
-
-                <p className="mt-2 text-sm text-slate-600">
-                  Preview: {formatCurrencyInput(formData.current_net_income) || '—'}
+                <p className="text-sm mt-2">
+                  {formatCurrencyInput(formData.current_net_income) || '—'}
                 </p>
               </CardContent>
             </Card>
 
             {/* Net Worth */}
-            <Card className="border-slate-200 shadow-sm">
+            <Card>
               <CardContent className="pt-6">
-                <div className="mb-3 flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-700">
-                      Net Worth
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Current recorded net worth
-                    </p>
-                  </div>
-                  <DollarSign className="h-5 w-5 text-green-500" />
+                <div className="flex justify-between mb-3">
+                  <p className="text-sm font-medium">Net Worth</p>
+                  <DollarSign className="w-5 h-5 text-green-500" />
                 </div>
-
                 <input
                   name="current_net_worth"
                   type="number"
                   value={formData.current_net_worth}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-3xl font-bold text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  className="w-full input text-2xl"
                 />
-
-                <p className="mt-2 text-sm text-slate-600">
-                  Preview: {formatCurrencyInput(formData.current_net_worth) || '—'}
+                <p className="text-sm mt-2">
+                  {formatCurrencyInput(formData.current_net_worth) || '—'}
                 </p>
               </CardContent>
             </Card>
+
           </div>
 
           {/* Messages */}
-          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-          {success && <p className="text-sm font-medium text-green-600">{success}</p>}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {success && <p className="text-green-600 text-sm">{success}</p>}
 
           {/* Actions */}
           <div className="flex gap-3">
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-md bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-50"
+              className="btn-primary"
             >
               {isPending ? 'Saving...' : 'Save Changes'}
             </button>
 
-            <Link
-              href={`/dashboard/clients/${client.id}`}
-              className="rounded-md bg-white px-4 py-2 text-slate-700 transition hover:bg-slate-50"
-            >
+            <Link href={`/dashboard/clients/${client.id}`} className="btn-secondary">
               Cancel
             </Link>
           </div>
+
         </CardContent>
       </Card>
     </form>
