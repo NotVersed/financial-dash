@@ -1,4 +1,4 @@
-export type Granularity = 'day' | 'week' | 'month' | 'year'
+export type Granularity = 'day' | 'month' | 'year'
 
 export type TimeSeriesMetrics = {
   date: string
@@ -32,14 +32,6 @@ export function aggregateMetrics(
         return `${y}-${String(m).padStart(2, '0')}`
       case 'year':
         return `${y}`
-      case 'week': {
-        const start = new Date(date)
-        const day = start.getUTCDay() || 7
-        start.setUTCDate(start.getUTCDate() + 4 - day)
-        const yearStart = new Date(Date.UTC(start.getUTCFullYear(), 0, 1))
-        const week = Math.ceil((((start as any) - (yearStart as any)) / 86400000 + 1) / 7)
-        return `${y}-W${week}`
-      }
     }
   }
 

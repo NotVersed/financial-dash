@@ -65,7 +65,16 @@ export default function ClientList({ clients = [] }: ClientListProps) {
       }),
     })
 
-    const data = await res.json()
+    // safe typing for json
+    let data = null
+
+    const text = await res.text()
+
+    try {
+      data = text ? JSON.parse(text) : null
+    } catch {
+      data = null
+    }
 
     if (!res.ok) {
       setError(data.error || 'Failed to add client.')
