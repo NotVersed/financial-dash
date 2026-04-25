@@ -1,14 +1,20 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+<<<<<<< HEAD
 import { useRouter } from 'next/navigation'
+=======
+>>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CreditCard, TrendingUp, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 
 type ClientInfo = {
   id: number
-  client_name: string
+  first_name: string
+  last_name: string
+  email: string
+  status: string
   current_credit_score: number | null
   current_net_worth: number | null
   current_net_income: number | null
@@ -23,13 +29,15 @@ type Props = {
 }
 
 export default function ClientEditForm({ client }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
   const [formData, setFormData] = useState({
-    client_name: client.client_name ?? '',
+    first_name: client.first_name ?? '',
+    last_name: client.last_name ?? '',
+    email: client.email ?? '',
+    status: client.status ?? 'active',
     current_credit_score: client.current_credit_score ?? '',
     current_net_worth: client.current_net_worth ?? '',
     current_net_income: client.current_net_income ?? '',
@@ -39,9 +47,13 @@ export default function ClientEditForm({ client }: Props) {
     notes: client.notes ?? '',
   })
 
+<<<<<<< HEAD
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
+=======
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+>>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
@@ -75,8 +87,16 @@ export default function ClientEditForm({ client }: Props) {
     setError('')
     setSuccess('')
 
+    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.email.trim()) {
+      setError('First name, last name, and email are required.')
+      return
+    }
+
     const payload = {
-      client_name: formData.client_name.trim(),
+      first_name: formData.first_name.trim(),
+      last_name: formData.last_name.trim(),
+      email: formData.email.trim(),
+      status: formData.status,
       current_credit_score: toNullableNumber(formData.current_credit_score),
       current_net_income: toNullableNumber(formData.current_net_income),
       current_net_worth: toNullableNumber(formData.current_net_worth),
@@ -117,6 +137,7 @@ export default function ClientEditForm({ client }: Props) {
           <CardTitle className="text-xl font-semibold text-slate-900">
             Edit Client Information
           </CardTitle>
+<<<<<<< HEAD
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -150,10 +171,88 @@ export default function ClientEditForm({ client }: Props) {
                     <p className="text-xs text-slate-500 mt-1">
                       Current recorded score
                     </p>
+=======
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label htmlFor="first_name" className="mb-2 block text-sm font-medium text-slate-700">
+                  First Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="first_name"
+                  name="first_name"
+                  type="text"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="last_name" className="mb-2 block text-sm font-medium text-slate-700">
+                  Last Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="last_name"
+                  name="last_name"
+                  type="text"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">
+                  Email Address <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label htmlFor="status" className="mb-2 block text-sm font-medium text-slate-700">
+                  Status
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+              
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <Card className="border-slate-200 shadow-sm">
+                <CardContent className="pt-6">
+                  <div className="mb-3 flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">
+                        Credit Score
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Current recorded score
+                      </p>
+                    </div>
+                    <CreditCard className="w-5 h-5 text-blue-500" />
+>>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
                   </div>
                   <CreditCard className="w-5 h-5 text-blue-500" />
                 </div>
 
+<<<<<<< HEAD
                 <input
                   id="current_credit_score"
                   name="current_credit_score"
@@ -164,6 +263,21 @@ export default function ClientEditForm({ client }: Props) {
                 />
               </CardContent>
             </Card>
+=======
+                  <label htmlFor="current_credit_score" className="sr-only">
+                    Current Credit Score
+                  </label>
+                  <input
+                    id="current_credit_score"
+                    name="current_credit_score"
+                    type="number"
+                    value={formData.current_credit_score}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-3xl font-bold text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  />
+                </CardContent> 
+              </Card>
+>>>>>>> 90da97ca8dd59bdc2cb1ab746891ded9cd09bbb5
 
             {/* Net Income */}
             <Card className="border-slate-200 shadow-sm">

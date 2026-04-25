@@ -11,6 +11,7 @@ const clientSelect = `
   first_name,
   last_name,
   email,
+  status,
   created,
   last_updated,
   client_dob,
@@ -65,6 +66,8 @@ export async function PATCH(
   const updates = {
     first_name: body.first_name,
     last_name: body.last_name,
+    email: body.email,
+    status: body.status,
     current_credit_score: body.current_credit_score,
     current_net_income: body.current_net_income,
     current_net_worth: body.current_net_worth,
