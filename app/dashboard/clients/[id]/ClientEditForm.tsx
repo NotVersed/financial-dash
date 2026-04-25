@@ -32,19 +32,7 @@ export default function ClientEditForm({ client }: Props) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const [formData, setFormData] = useState<{
-    first_name: string
-    last_name: string
-    email: string
-    status: string
-    current_credit_score: string | number
-    current_net_worth: string | number
-    current_net_income: string | number
-    goal_credit_score: string | number
-    goal_net_worth: string | number
-    goal_net_income: string | number
-    notes: string
-  }>({
+  const [formData, setFormData] = useState({
     first_name: client.first_name ?? '',
     last_name: client.last_name ?? '',
     email: client.email ?? '',
@@ -71,7 +59,6 @@ export default function ClientEditForm({ client }: Props) {
   function toNullableNumber(value: string | number) {
     const str = String(value).trim()
     if (!str) return null
-
     const num = Number(str)
     return Number.isNaN(num) ? null : num
   }
@@ -79,10 +66,8 @@ export default function ClientEditForm({ client }: Props) {
   function formatCurrencyInput(value: string | number) {
     const str = String(value).trim()
     if (!str) return ''
-
     const num = Number(str)
     if (Number.isNaN(num)) return ''
-
     return num.toLocaleString('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -131,12 +116,12 @@ export default function ClientEditForm({ client }: Props) {
 
     startTransition(() => {
       router.push(`/dashboard/clients/${client.id}`)
-      router.refresh() // ensures fresh data after navigation
+      router.refresh()
     })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 text-slate-900">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-xl font-semibold text-slate-900">
@@ -157,7 +142,7 @@ export default function ClientEditForm({ client }: Props) {
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className="w-full input"
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
             </div>
 
@@ -169,7 +154,7 @@ export default function ClientEditForm({ client }: Props) {
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                className="w-full input"
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
             </div>
 
@@ -182,7 +167,7 @@ export default function ClientEditForm({ client }: Props) {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full input"
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
             </div>
 
@@ -191,7 +176,7 @@ export default function ClientEditForm({ client }: Props) {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full input"
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -202,11 +187,10 @@ export default function ClientEditForm({ client }: Props) {
           {/* Financial Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            {/* Credit Score */}
-            <Card>
+            <Card className="border-slate-200 shadow-sm">
               <CardContent className="pt-6">
                 <div className="flex justify-between mb-3">
-                  <p className="text-sm font-medium">Credit Score</p>
+                  <p className="text-sm font-medium text-slate-700">Credit Score</p>
                   <CreditCard className="w-5 h-5 text-blue-500" />
                 </div>
                 <input
@@ -214,16 +198,15 @@ export default function ClientEditForm({ client }: Props) {
                   type="number"
                   value={formData.current_credit_score}
                   onChange={handleChange}
-                  className="w-full input text-2xl"
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-2xl font-bold text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 />
               </CardContent>
             </Card>
 
-            {/* Income */}
-            <Card>
+            <Card className="border-slate-200 shadow-sm">
               <CardContent className="pt-6">
                 <div className="flex justify-between mb-3">
-                  <p className="text-sm font-medium">Net Income</p>
+                  <p className="text-sm font-medium text-slate-700">Net Income</p>
                   <TrendingUp className="w-5 h-5 text-green-500" />
                 </div>
                 <input
@@ -231,19 +214,18 @@ export default function ClientEditForm({ client }: Props) {
                   type="number"
                   value={formData.current_net_income}
                   onChange={handleChange}
-                  className="w-full input text-2xl"
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-2xl font-bold text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 />
-                <p className="text-sm mt-2">
+                <p className="text-sm mt-2 text-slate-600">
                   {formatCurrencyInput(formData.current_net_income) || '—'}
                 </p>
               </CardContent>
             </Card>
 
-            {/* Net Worth */}
-            <Card>
+            <Card className="border-slate-200 shadow-sm">
               <CardContent className="pt-6">
                 <div className="flex justify-between mb-3">
-                  <p className="text-sm font-medium">Net Worth</p>
+                  <p className="text-sm font-medium text-slate-700">Net Worth</p>
                   <DollarSign className="w-5 h-5 text-green-500" />
                 </div>
                 <input
@@ -251,9 +233,9 @@ export default function ClientEditForm({ client }: Props) {
                   type="number"
                   value={formData.current_net_worth}
                   onChange={handleChange}
-                  className="w-full input text-2xl"
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-2xl font-bold text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 />
-                <p className="text-sm mt-2">
+                <p className="text-sm mt-2 text-slate-600">
                   {formatCurrencyInput(formData.current_net_worth) || '—'}
                 </p>
               </CardContent>
@@ -262,20 +244,23 @@ export default function ClientEditForm({ client }: Props) {
           </div>
 
           {/* Messages */}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {success && <p className="text-sm text-green-600">{success}</p>}
 
           {/* Actions */}
           <div className="flex gap-3">
             <button
               type="submit"
               disabled={isPending}
-              className="btn-primary"
+              className="rounded-md bg-slate-900 px-4 py-2 text-white hover:bg-slate-800 disabled:opacity-50"
             >
               {isPending ? 'Saving...' : 'Save Changes'}
             </button>
 
-            <Link href={`/dashboard/clients/${client.id}`} className="btn-secondary">
+            <Link
+              href={`/dashboard/clients/${client.id}`}
+              className="rounded-md bg-white px-4 py-2 text-slate-700 border border-slate-200 hover:bg-slate-50"
+            >
               Cancel
             </Link>
           </div>
