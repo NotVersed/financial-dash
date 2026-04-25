@@ -11,7 +11,7 @@ export function Logo({ className = '', size = 40, showText = false }: LogoProps)
     <div className="flex items-center gap-3">
       <div className="relative" style={{ width: size, height: size }}>
         <Image 
-          src="/logo.png" 
+          src="/logo-new.png" 
           alt="LIFE Logo" 
           fill
           className={`object-contain ${className}`}
