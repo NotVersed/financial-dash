@@ -68,7 +68,7 @@ if (Number.isNaN(clientId)) {
   // -------------------------
   const { data: client, error: clientError } = await supabase
     .from('clients')
-    .select('client_id, first_name, last_name')
+    .select('client_id, first_name, last_name, goal_credit_score, goal_net_income, goal_net_worth')
     .eq('client_id', clientId)
     .maybeSingle()
 
@@ -156,6 +156,68 @@ if (Number.isNaN(clientId)) {
 
       </div>
 
+      {/* Milestones Progress */}
+      <Card className="mb-8">
+        <CardHeader>
+	  <CardTitle>Goal Progress</CardTitle>
+          <CardDescription>Current vs Target Goals</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+
+      {/* Credit Score Progress */}
+      <div>
+        <div className="flex justify-between texr-sm mb-2">
+           <span className="font-medium">Credit Score</span>	   <span className="text-slate-600">
+	      {latest?.credit_score ?? 0} / {client.goal_credit_score ?? '-'}
+           </span>
+        </div>
+        <div className="w-full bg-slate-200 rounded-full h-3">
+           <div
+              className="bg-blue-600 h-3 rounded-full transition-all"
+              style={{
+                 width: '${Math.min(100, ((later?.credit_score ?? 0) / (client.goal_credit_score || 1)) * 100)}%'
+              }}
+            />
+         </div>
+       </div>
+
+      {/* Net Income Progress */}
+      <div>
+        <div classNaem="flex justify-between text-sm mb-2"}     
+           <span className="font-medium">Net Income</span>
+           <span className="text-slate-600">
+             ${(latest?.net_income ?? 0).toLocaleString()} / ${(client.goal_net_income ?? 0).toLocaleString()}
+           </span>
+        </div>
+        <div className="w-full bg-slate-200 rounded-full h-3">
+          <div 
+            className="bg-green-600 h-3 rounded-full transition-all"
+            style={{
+              width: '${Math.min(100, ((latest?.net_income ?? 0) / (client.goal_net_income || 1)) * 100)}%'
+            }}
+         />
+       </div>
+      </div>
+
+      {/* Net Worth Progress */}
+      <div>
+      <div className="flex justify-between text-sm mb-2">
+        <span className="font-medium">Net Worth</span>
+        <span className="text-slate-600">
+          ${(latest?.net_worth ?? 0).toLocaleString()} / ${(client.goal_net_worth ?? 0).toLocaleString()}
+        </span>
+      </div>
+      <div className="w-full bg-slate-200 rounded-full h-3">
+        <div
+           className="bg-emerald-600 h-3 rounded-full transition-all"
+           style={{
+             width: '${Math.min(100, ((latest?.net_worth ?? 0) / (client.goal_net_worth || 1)) * 100)}$'
+           }}
+         />
+       </div
+      </div>
+     </CardContent>
+    </Card>	
       {/* Notes */}
       <Card>
         <CardHeader>
