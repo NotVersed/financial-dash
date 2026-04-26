@@ -18,9 +18,37 @@ type DashboardChartsProps = {
   metrics?: TimeSeriesMetrics[]
 }
 
+/**
+ * Formats X-axis labels for readability
+ */
+function formatXAxisLabel(value: string, granularity: Exclude<Granularity, 'week'>) {
+  if (!value) return ''
+
+  switch (granularity) {
+    case 'day': {
+      // 2026-04-23 → 04/23
+      const [, m, d] = value.split('-')
+      return `${m}/${d}`
+    }
+
+    case 'month': {
+      // 2026-04 → Apr '26
+      const [y, m] = value.split('-')
+      const date = new Date(Number(y), Number(m) - 1)
+      return date.toLocaleString('en-US', { month: 'short' }) + ` '${String(y).slice(2)}`
+    }
+
+    case 'year':
+      return value
+
+    default:
+      return value
+  }
+}
+
 export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) {
 
-  const [granularity, setGranularity] = useState<Granularity>('month')
+  const [granularity, setGranularity] = useState<Exclude<Granularity, 'week'>>('month')
 
   const chartData = useMemo(() => {
     const aggregated = aggregateMetrics(metrics, granularity)
@@ -42,7 +70,7 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
     )
   }
 
-  const granularityOptions: Granularity[] = ['day', 'week', 'month', 'year']
+  const granularityOptions: Exclude<Granularity, 'week'>[] = ['day', 'month', 'year']
 
   return (
     <div className="space-y-4 mb-8">
@@ -64,7 +92,6 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
         ))}
       </div>
 
-      {/* Charts grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Credit Score */}
@@ -82,17 +109,14 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-		   dataKey="date"
-		   tickFormatter={(value) =>{
-		      if(granularity === 'month'){
-                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-			 const date=new Date(value)
-			 return monthNames[date.getMonth()]
-		      }
-		      return value
-	            }}
-		 />
+
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(v) => formatXAxisLabel(v, granularity)}
+                  interval="preserveStartEnd"
+                  minTickGap={20}
+                />
+
                 <YAxis domain={[500, 850]} />
                 <Tooltip />
                 <Area dataKey="score" stroke="#3b82f6" fillOpacity={0.2} />
@@ -113,17 +137,14 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-		      dataKey="date"
-		   tickFormatter={(value) =>{
-		      if(granularity === 'month'){
-                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-			 const date=new Date(value)
-			 return monthNames[date.getMonth()]
-		      }
-		      return value
-	            }}
-		 />
+
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(v) => formatXAxisLabel(v, granularity)}
+                  interval="preserveStartEnd"
+                  minTickGap={20}
+                />
+
                 <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
                 <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
                 <Area dataKey="income" stroke="#22c55e" fillOpacity={0.2} />
@@ -144,17 +165,14 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-		       dataKey="date"
-		   tickFormatter={(value) =>{
-		      if(granularity === 'month'){
-                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-			 const date=new Date(value)
-			 return monthNames[date.getMonth()]
-		      }
-		      return value
-	            }}
-		/>
+
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(v) => formatXAxisLabel(v, granularity)}
+                  interval="preserveStartEnd"
+                  minTickGap={20}
+                />
+
                 <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
                 <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
                 <Area dataKey="worth" stroke="#10b981" fillOpacity={0.2} />
@@ -163,32 +181,26 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
           </CardContent>
         </Card>
 
-        {/* Clients Growth */}
+        {/* Clients */}
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">
               Clients Over Time
             </CardTitle>
-            <CardDescription>
-              Total number of clients in the system
-            </CardDescription>
           </CardHeader>
 
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-		     dataKey="date"
-		   tickFormatter={(value) =>{
-		      if(granularity === 'month'){
-                         const monthNames=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-			 const date=new Date(value)
-			 return monthNames[date.getMonth()]
-		      }
-		      return value
-	            }}
-		/>
+
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(v) => formatXAxisLabel(v, granularity)}
+                  interval="preserveStartEnd"
+                  minTickGap={20}
+                />
+
                 <YAxis />
                 <Tooltip />
                 <Area dataKey="clients" stroke="#8b5cf6" fillOpacity={0.2} />

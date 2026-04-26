@@ -1,30 +1,27 @@
+console.log('[ClientDetailPage] PAGE EXECUTED')
+
 export const dynamic = 'force-dynamic'
 
 import { redirect, notFound } from 'next/navigation'
-import { cookies } from 'next/headers'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { CreditCard, TrendingUp, DollarSign, ArrowLeft } from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
+import {
+  CreditCard,
+  TrendingUp,
+  DollarSign,
+  ArrowLeft,
+} from 'lucide-react'
 import Link from 'next/link'
-import ClientEditForm from './ClientEditForm'
-import AddNoteForm from './AddNoteForm'
 import { createClient } from '@/lib/supabase/server'
 import NotesSection from './NotesSection'
-
 import DeleteClientButton from './DeleteClientButton'
-
-
-
-type ClientInfo = {
-  id: number
-  client_name: string
-  current_credit_score: number | null
-  current_net_worth: number | null
-  current_net_income: number | null
-  notes: string | null
-  goal_net_income: number | null
-  goal_net_worth: number | null
-  goal_credit_score: number | null
-}
+import { METRICS_TABLE_NAME } from '@/app/dashboard/clients/dataInformation'
+import { log } from 'console'
 
 type Note = {
   note_id: number
@@ -32,230 +29,156 @@ type Note = {
   created_at: string
 }
 
+// type Client = {
+//   id: number
+//   first_name: string
+//   last_name: string
+// }
+
 export default async function ClientDetailPage({
   params,
 }: {
+  // FIX: params is a Promise in modern Next.js
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const cookieStore = await cookies()
 
-  const res = await fetch(`http://localhost:3000/api/clients/${id}`, {
-    headers: {
-      cookie: cookieStore.toString(),
-    },
-    cache: 'no-store',
+  const clientId = Number(id)
+
+// Guard invalid route param early
+if (Number.isNaN(clientId)) {
+  console.log('[ClientDetailPage] INVALID CLIENT ID PARAM:', {
+    raw: id,
+    parsed: clientId,
   })
 
-  if (res.status === 401) {
-    redirect('/login')
-  }
-
-  if (res.status === 404) {
-    notFound()
-  }
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch client info')
-  }
-
-  const data: { clientInfo: ClientInfo } = await res.json()
-  const client = data.clientInfo
-
-  const metrics: any[] = []
-  const loans: any[] = []
-  const milestones: any[] = []
+  notFound()
+}
 
   const supabase = await createClient()
-  const{data: notesData} = await supabase.from("notes").select("*").eq("client_id", Number(id))
-  const notes: Note[] = notesData || []
 
-  const sortedNotes = [...notes].sort( (a,b)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
+  if (!user) redirect('/login')
 
-  console.log(
-  sortedNotes.map((note, index) => ({
-    index,
-    id: note.id,
-    content: note.content,
-    created_at: note.created_at,
-  }))
-)
+  // -------------------------
+  // Client (source of truth)
+  // -------------------------
+  const { data: client, error: clientError } = await supabase
+    .from('clients')
+    .select('client_id, first_name, last_name')
+    .eq('client_id', clientId)
+    .maybeSingle()
+
+  if (clientError || !client) notFound()
+
+  // -------------------------
+  // Latest metrics
+  // -------------------------
+  const { data: metrics } = await supabase
+    .from(METRICS_TABLE_NAME)
+    .select('net_income, net_worth, credit_score')
+    .eq('client_id', clientId)
+    .order('measurement_date', { ascending: false })
+    .limit(1)
+
+  const latest = metrics?.[0] ?? null
+
+  // -------------------------
+  // Notes
+  // -------------------------
+  const { data: notesData } = await supabase
+    .from('notes')
+    .select('*')
+    .eq('client_id', clientId)
+
+  const sortedNotes: Note[] = (notesData ?? []).sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime()
+  )
+
   return (
-    <div className="p-8">
+    <div className="p-8 text-slate-900">
+
       <Link
         href="/dashboard/clients"
-        className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 mb-6 transition-colors"
+        className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Clients
       </Link>
+
       <div className="mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 font-bold text-lg">
-            {client.client_name?.charAt(0) || '?'}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{client.client_name}</h1>
-            <p className="text-sm text-slate-500">
-              Email: N/A · Status: N/A
-            </p>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold">
+          {client.first_name} {client.last_name}
+        </h1>
       </div>
 
+      {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Credit Score</CardTitle>
+          <CardHeader className="flex justify-between pb-2">
+            <CardTitle className="text-sm">Credit Score</CardTitle>
             <CreditCard className="w-4 h-4 text-blue-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-500">
-              {client.current_credit_score ?? '—'}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Current recorded score</p>
+          <CardContent className="text-2xl font-bold">
+            {latest?.credit_score ?? '—'}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Income</CardTitle>
+          <CardHeader className="flex justify-between pb-2">
+            <CardTitle className="text-sm">Net Income</CardTitle>
             <TrendingUp className="w-4 h-4 text-green-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-500">
-              {client.current_net_income != null
-                ? `$${Number(client.current_net_income).toLocaleString()}`
-                : '—'}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Current recorded income</p>
+          <CardContent className="text-2xl font-bold">
+            {latest?.net_income != null
+              ? `$${Number(latest.net_income).toLocaleString()}`
+              : '—'}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
+          <CardHeader className="flex justify-between pb-2">
+            <CardTitle className="text-sm">Net Worth</CardTitle>
             <DollarSign className="w-4 h-4 text-emerald-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-500">
-              {client.current_net_worth != null
-                ? `$${Number(client.current_net_worth).toLocaleString()}`
-                : '—'}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Current recorded net worth</p>
+          <CardContent className="text-2xl font-bold">
+            {latest?.net_worth != null
+              ? `$${Number(latest.net_worth).toLocaleString()}`
+              : '—'}
           </CardContent>
         </Card>
+
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Financial History</CardTitle>
-            <CardDescription>All recorded metrics over time</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {metrics.length > 0 ? (
-              <div className="space-y-3">
-                {metrics.map((m: any) => (
-                  <div key={m.id} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                    <span className="text-sm text-slate-500">{m.metric_date}</span>
-                    <div className="flex gap-4 text-sm">
-                      <span>Score: <strong>{m.credit_score ?? '—'}</strong></span>
-                      <span>Income: <strong>{m.net_income ? `$${Number(m.net_income).toLocaleString()}` : '—'}</strong></span>
-                      <span>Worth: <strong>{m.net_worth ? `$${Number(m.net_worth).toLocaleString()}` : '—'}</strong></span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400">
-                No financial data recorded yet (feature coming soon)
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Notes</CardTitle>
+          <CardDescription>Client history</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotesSection notes={sortedNotes} clientId={clientId} />
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Milestones</CardTitle>
-            <CardDescription>Achievements and progress markers</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {milestones.length > 0 ? (
-              <div className="space-y-2">
-                {milestones.map((m: any) => (
-                  <div key={m.id} className="flex items-center gap-2 py-2 border-b border-slate-100 last:border-0">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-sm text-slate-700">{m.description || m.milestone_type}</span>
-                    <span className="text-xs text-slate-400 ml-auto">{m.achieved_date}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400">
-                No milestones recorded yet (feature coming soon)
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Loan Participation</CardTitle>
-            <CardDescription>Active and past loans</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loans.length > 0 ? (
-              <div className="space-y-2">
-                {loans.map((loan: any) => (
-                  <div key={loan.id} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                    <span className="text-sm text-slate-700">{loan.loan_type || 'Loan'}</span>
-                    <span className="text-sm font-medium">${Number(loan.loan_amount).toLocaleString()}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${loan.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                      {loan.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400">
-                No loan data available (feature coming soon)
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-col items-start gap-2">
-
-            <div>
-              <CardTitle>Notes</CardTitle>
-              <CardDescription> </CardDescription>
-
-            </div>
-          </CardHeader>
-          <CardContent>
-            <NotesSection notes={sortedNotes} clientId={client.id}/>
-
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+      {/* Actions */}
+      <div className="mt-6 flex gap-3">
         <Link
-          href={`/dashboard/clients/${client.id}/edit`}
-          className="inline-block rounded-md bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800"
+          href={`/dashboard/clients/${clientId}/edit`}
+          className="rounded-md bg-slate-900 px-4 py-2 text-white"
         >
-          Edit Client Information
+          Edit Client
         </Link>
 
         <DeleteClientButton
-          clientId={client.id}
-          clientName={client.client_name || `Client #${client.id}`}
+          clientId={clientId}
+          clientName={`${client.first_name} ${client.last_name}`}
         />
       </div>
 

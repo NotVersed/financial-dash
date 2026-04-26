@@ -2,13 +2,12 @@
 
 // TABLE NAMES
 export const CLIENT_TABLE_NAME = 'clients'
-export const METRICS_TABLE_NAME = 'financial_metrics'
+export const METRICS_TABLE_NAME = 'financial_info'
 
-// COLUMN NAMES (THIS IS WHAT YOU WERE MISSING)
 export const CLIENT_ID_COL = 'client_id'
 export const CLIENT_NAME_COL = 'last_name' // or 'first_name' depending on sort preference
 
-// Normalize client object (VERY important for UI consistency)
+// Normalize client object 
 export function normalizeClient(client) {
   if (!client) return null
 

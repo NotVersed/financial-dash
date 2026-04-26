@@ -37,7 +37,7 @@ export default async function EditClientPage({
   const { data: client, error: clientError } = await supabase
     .from('clients')
     .select('*')
-    .eq('id', id)
+    .eq('client_id', id)
     .single()
 
   if (clientError || !client) {
@@ -46,7 +46,7 @@ export default async function EditClientPage({
 
   // 2. Get latest financial snapshot
   const { data: metrics } = await supabase
-    .from('financial_metrics')
+    .from('financial_info')
     .select('*')
     .eq('client_id', id)
     .order('updated_at', { ascending: false })
@@ -56,6 +56,8 @@ export default async function EditClientPage({
   // 3. Merge into one object
   const clientWithMetrics = {
     ...client,
+    id: client.client_id,
+    client_name: `${client.first_name ?? ''} ${client.last_name ?? ''}`.trim(),
     current_credit_score: metrics?.current_credit_score ?? null,
     current_net_worth: metrics?.current_net_worth ?? null,
     current_net_income: metrics?.current_net_income ?? null,
