@@ -29,7 +29,7 @@ function calculateAverage(values: Array<number | string | null | undefined>) {
 }
 
 /**
- * 🚀 NOW USING MATERIALIZED VIEW (NO RAW TIME SERIES LOGIC HERE)
+ * NOW USING MATERIALIZED VIEW (NO RAW TIME SERIES LOGIC HERE)
  */
 async function getDashboardStats() {
   const supabase = await createClient()
@@ -46,15 +46,18 @@ async function getDashboardStats() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'active')
 
-  const { data: clientMetrics } = await supabase
-    .from(CLIENT_TABLE_NAME)
-    .select('current_credit_score, current_net_income, current_net_worth')
+  const { data: latestClients } = await supabase
+  .from('financial_snapshots')
+  .select('avg_credit_score, avg_income, avg_net_worth')
+  .order('date', { ascending: false })
+  .limit(1)
 
-  const metricRows: ClientMetricRow[] = clientMetrics ?? []
+  const snapshot = latestClients?.[0]
 
-  const avgCreditScore = calculateAverage(metricRows.map(r => r.current_credit_score))
-  const avgNetIncome = calculateAverage(metricRows.map(r => r.current_net_income))
-  const avgNetWorth = calculateAverage(metricRows.map(r => r.current_net_worth))
+  const avgCreditScore = snapshot?.avg_credit_score ?? null
+  const avgNetIncome = snapshot?.avg_income ?? null
+  const avgNetWorth = snapshot?.avg_net_worth ?? null
+
 
   // -------------------------
   // LOANS / MILESTONES
@@ -73,10 +76,10 @@ async function getDashboardStats() {
     .select('*', { count: 'exact', head: true })
 
   // -------------------------
-  // 🚀 TIME SERIES NOW COMES FROM MATERIALIZED VIEW
+  // TIME SERIES NOW COMES FROM MATERIALIZED VIEW
   // -------------------------
   const { data: snapshotData } = await supabase
-    .from('financial_snapshots') // 👈 MATERIALIZED VIEW
+    .from('financial_snapshots') // MATERIALIZED VIEW
     .select('date, avg_income, avg_net_worth, avg_credit_score, total_clients')
     .order('date', { ascending: true })
 
