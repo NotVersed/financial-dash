@@ -4,10 +4,11 @@ import {
   CLIENT_ID_COL,
   CLIENT_TABLE_NAME,
   normalizeClient,
+  METRICS_TABLE_NAME,
 } from '@/app/dashboard/clients/dataInformation'
 
 const clientSelect = `
-  client_id,
+  id,
   first_name,
   last_name,
   email,
@@ -15,102 +16,213 @@ const clientSelect = `
   created,
   last_updated,
   client_dob,
-  current_credit_score,
-  current_net_worth,
-  current_net_income,
   goal_credit_score,
   goal_net_worth,
   goal_net_income
 `
 
+/**
+ * GET /api/clients/[id]
+ * Client comes from clients table
+ * Latest financial snapshot comes from metrics table
+ */
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const { data, error } = await supabase
-    .from(CLIENT_TABLE_NAME)
-    .select(clientSelect)
-    .eq(CLIENT_ID_COL, Number(id))
-    .maybeSingle()
-
-  if (error || !data) {
-    return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  return NextResponse.json({ clientInfo: normalizeClient(data) })
-}
-
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const body = await request.json()
-  const clientId = Number(id)
+  const clientId = Number(params.id)
 
   if (Number.isNaN(clientId)) {
     return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
   }
 
-  const updates = {
+  // -------------------------
+  // 1. Get client
+  // -------------------------
+  const { data: client, error: clientError } = await supabase
+    .from(CLIENT_TABLE_NAME)
+    .select(clientSelect)
+    .eq('id', clientId)
+    .maybeSingle()
+
+  if (clientError || !client) {
+    return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  }
+
+  // -------------------------
+  // 2. Get latest metrics (THIS is the key change)
+  // -------------------------
+  const { data: metrics, error: metricsError } = await supabase
+    .from(METRICS_TABLE_NAME)
+    .select('net_income, net_worth, credit_score, measurement_date')
+    .eq('client_id', clientId)
+    .order('measurement_date', { ascending: false })
+    .limit(1)
+
+  if (metricsError) {
+    return NextResponse.json(
+      { error: metricsError.message },
+      { status: 500 }
+    )
+  }
+
+  const latest = metrics?.[0] ?? null
+
+  // -------------------------
+  // 3. Merge response
+  // -------------------------
+  return NextResponse.json({
+    clientInfo: normalizeClient({
+      ...client,
+      current_net_income: latest?.net_income ?? null,
+      current_net_worth: latest?.net_worth ?? null,
+      current_credit_score: latest?.credit_score ?? null,
+    }),
+  })
+}
+
+/**
+ * PATCH /api/clients/[id]
+ * Updates:
+ * - clients table → identity fields
+ * - metrics table → financial snapshot (append-only style)
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const clientId = Number(params.id)
+
+  if (Number.isNaN(clientId)) {
+    return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
+  }
+
+  const body = await request.json()
+
+  // -------------------------
+  // 1. Update client table (identity fields only)
+  // -------------------------
+  const clientUpdates = {
     first_name: body.first_name,
     last_name: body.last_name,
     email: body.email,
     status: body.status,
-    current_credit_score: body.current_credit_score,
-    current_net_income: body.current_net_income,
-    current_net_worth: body.current_net_worth,
-    goal_credit_score: body.goal_credit_score,
-    goal_net_income: body.goal_net_income,
-    goal_net_worth: body.goal_net_worth,
     last_updated: new Date().toISOString(),
   }
 
-  const { data, error } = await supabase
+  const { data: updatedClient, error: clientError } = await supabase
     .from(CLIENT_TABLE_NAME)
-    .update(updates)
-    .eq(CLIENT_ID_COL, clientId)
+    .update(clientUpdates)
+    .eq('id', clientId)
     .select(clientSelect)
-    .single()
+    .maybeSingle()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (clientError) {
+    return NextResponse.json({ error: clientError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ clientInfo: normalizeClient(data) })
+  // -------------------------
+  // 2. Insert metrics snapshot (append-only history)
+  // -------------------------
+  const hasFinancialData =
+    body.current_net_income != null ||
+    body.current_net_worth != null ||
+    body.current_credit_score != null
+
+  if (hasFinancialData) {
+    const { error: metricsError } = await supabase
+      .from(METRICS_TABLE_NAME)
+      .insert({
+        client_id: clientId, // IMPORTANT: FK mapping (clients.id → metrics.client_id)
+        net_income: body.current_net_income ?? null,
+        net_worth: body.current_net_worth ?? null,
+        credit_score: body.current_credit_score ?? null,
+        measurement_date: new Date().toISOString(),
+      })
+
+    if (metricsError) {
+      return NextResponse.json(
+        { error: metricsError.message },
+        { status: 500 }
+      )
+    }
+  }
+
+  // -------------------------
+  // 3. Return merged client
+  // -------------------------
+  const { data: latestMetrics } = await supabase
+    .from(METRICS_TABLE_NAME)
+    .select('net_income, net_worth, credit_score')
+    .eq('client_id', clientId)
+    .order('measurement_date', { ascending: false })
+    .limit(1)
+
+  const latest = latestMetrics?.[0] ?? null
+
+  return NextResponse.json({
+    clientInfo: normalizeClient({
+      ...updatedClient!,
+      current_net_income: latest?.net_income ?? null,
+      current_net_worth: latest?.net_worth ?? null,
+      current_credit_score: latest?.credit_score ?? null,
+    }),
+  })
 }
 
+/**
+ * DELETE /api/clients/[id]
+ */
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params
-  const clientId = Number(id)
-
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const clientId = Number(params.id)
+
+  if (Number.isNaN(clientId)) {
+    return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
+  }
 
   const { error } = await supabase
     .from(CLIENT_TABLE_NAME)
     .delete()
-    .eq(CLIENT_ID_COL, clientId)
+    .eq('id', clientId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ message: 'Client deleted successfully' })
+  return NextResponse.json({
+    message: 'Client deleted successfully',
+  })
 }

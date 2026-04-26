@@ -237,6 +237,12 @@ export default function ClientList({ clients = [] }: ClientListProps) {
           {filteredClients.map((client: Client) => {
             const clientId = client.client_id ?? client.id
             const displayName = getClientDisplayName(client)
+            
+            console.log({
+              client,
+              clientId,
+              type: typeof clientId,
+            })
 
             return (
               <Link key={String(clientId ?? client.email ?? displayName)} href={`/dashboard/clients/${clientId}`}>

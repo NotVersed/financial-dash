@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import ClientList from './ClientList'
 import {
   CLIENT_TABLE_NAME,
+  METRICS_TABLE_NAME,
   mergeClientWithMetrics
 } from './dataInformation'
 
@@ -19,7 +20,7 @@ export default async function ClientsPage() {
 
   // Fetch financial metrics
   const { data: metrics } = await supabase
-    .from('financial_metrics')
+    .from(METRICS_TABLE_NAME)
     .select('*')
     .order('updated_at', { ascending: false })
 
