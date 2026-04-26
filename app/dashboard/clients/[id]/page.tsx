@@ -76,8 +76,8 @@ export default async function ClientDetailPage({
   console.log(
   sortedNotes.map((note, index) => ({
     index,
-    id: note.id,
-    content: note.content,
+    id: note.note_id,
+    content: note.note,
     created_at: note.created_at,
   }))
 )

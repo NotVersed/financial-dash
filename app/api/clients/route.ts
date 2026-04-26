@@ -3,10 +3,39 @@ import { createClient } from '@/lib/supabase/server'
 import {
   CLIENT_TABLE_NAME,
   normalizeClient,
+  METRICS_TABLE_NAME
 } from '@/app/dashboard/clients/dataInformation'
 
 /**
+ * Helper: get latest metric per client
+ * Assumes rows are ordered by client_id ASC, measurement_date DESC
+ */
+function buildLatestMetricsMap(metrics: any[]) {
+  const map = new Map<
+    string,
+    {
+      net_income: number | null
+      net_worth: number | null
+      credit_score: number | null
+    }
+  >()
+
+  for (const m of metrics ?? []) {
+    if (!map.has(m.client_id)) {
+      map.set(m.client_id, {
+        net_income: m.net_income,
+        net_worth: m.net_worth,
+        credit_score: m.credit_score,
+      })
+    }
+  }
+
+  return map
+}
+
+/**
  * GET /api/clients
+ * Returns clients + latest financial state (derived from metrics table)
  */
 export async function GET() {
   try {
@@ -23,20 +52,64 @@ export async function GET() {
       )
     }
 
-    const { data, error } = await supabase
+    // -------------------------
+    // 1. Fetch clients
+    // -------------------------
+    const { data: clients, error: clientError } = await supabase
       .from(CLIENT_TABLE_NAME)
       .select('*')
       .order('last_name', { ascending: true })
 
-    if (error) {
+    if (clientError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: clientError.message },
         { status: 500 }
       )
     }
 
+    // -------------------------
+    // 2. Fetch ALL metrics ordered for latest extraction
+    // -------------------------
+    const { data: metrics, error: metricsError } = await supabase
+      .from(METRICS_TABLE_NAME)
+      .select(`
+        client_id,
+        net_income,
+        net_worth,
+        credit_score,
+        measurement_date
+      `)
+      .order('client_id', { ascending: true })
+      .order('measurement_date', { ascending: false })
+
+    if (metricsError) {
+      return NextResponse.json(
+        { error: metricsError.message },
+        { status: 500 }
+      )
+    }
+
+    // -------------------------
+    // 3. Build latest metrics map
+    // -------------------------
+    const latestMetricsMap = buildLatestMetricsMap(metrics ?? [])
+
+    // -------------------------
+    // 4. Merge into clients
+    // -------------------------
+    const enrichedClients = (clients ?? []).map(c => {
+      const latest = latestMetricsMap.get(c.id)
+
+      return normalizeClient({
+        ...c,
+        current_net_income: latest?.net_income ?? null,
+        current_net_worth: latest?.net_worth ?? null,
+        current_credit_score: latest?.credit_score ?? null,
+      })
+    })
+
     return NextResponse.json({
-      clients: (data ?? []).map(normalizeClient),
+      clients: enrichedClients,
     })
   } catch (err) {
     return NextResponse.json(
@@ -48,6 +121,7 @@ export async function GET() {
 
 /**
  * POST /api/clients
+ * Creates a client AND optionally inserts initial financial metrics
  */
 export async function POST(req: Request) {
   try {
@@ -66,8 +140,21 @@ export async function POST(req: Request) {
 
     const body = await req.json()
 
-    const { first_name, last_name, email, status } = body
+    const {
+      first_name,
+      last_name,
+      email,
+      status,
 
+      // optional financial inputs
+      current_net_income,
+      current_net_worth,
+      current_credit_score,
+    } = body
+
+    // -------------------------
+    // Validate client fields
+    // -------------------------
     if (!first_name || !last_name || !email) {
       return NextResponse.json(
         { error: 'First name, last name, and email are required.' },
@@ -75,7 +162,10 @@ export async function POST(req: Request) {
       )
     }
 
-    const { data, error } = await supabase
+    // -------------------------
+    // 1. Insert client
+    // -------------------------
+    const { data: client, error: clientError } = await supabase
       .from(CLIENT_TABLE_NAME)
       .insert([
         {
@@ -88,15 +178,54 @@ export async function POST(req: Request) {
       .select()
       .single()
 
-    if (error) {
+    if (clientError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: clientError.message },
         { status: 500 }
       )
     }
 
+    // -------------------------
+    // 2. Insert initial metrics (if provided)
+    // -------------------------
+    const hasMetrics =
+      current_net_income != null ||
+      current_net_worth != null ||
+      current_credit_score != null
+
+    if (hasMetrics) {
+      const { error: metricsError } = await supabase
+        .from(METRICS_TABLE_NAME)
+        .insert([
+          {
+            client_id: client.id,
+            net_income: current_net_income ?? null,
+            net_worth: current_net_worth ?? null,
+            credit_score: current_credit_score ?? null,
+            measurement_date: new Date().toISOString(),
+          },
+        ])
+
+      if (metricsError) {
+        return NextResponse.json(
+          { error: metricsError.message },
+          { status: 500 }
+        )
+      }
+    }
+
+    // -------------------------
+    // 3. Return merged response
+    // -------------------------
     return NextResponse.json(
-      { client: normalizeClient(data) },
+      {
+        client: normalizeClient({
+          ...client,
+          current_net_income: current_net_income ?? null,
+          current_net_worth: current_net_worth ?? null,
+          current_credit_score: current_credit_score ?? null,
+        }),
+      },
       { status: 201 }
     )
   } catch (err) {
