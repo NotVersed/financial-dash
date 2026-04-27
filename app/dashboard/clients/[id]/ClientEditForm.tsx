@@ -28,6 +28,7 @@ type Props = {
 export default function ClientEditForm({ client }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const resolvedClientId = Number(client.id)
 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -98,7 +99,12 @@ export default function ClientEditForm({ client }: Props) {
       notes: formData.notes.trim() || null,
     }
 
-    const res = await fetch(`/api/clients/${client.id}`, {
+    if (Number.isNaN(resolvedClientId)) {
+      setError('Invalid client ID')
+      return
+    }
+
+    const res = await fetch(`/api/clients/${resolvedClientId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -115,7 +121,7 @@ export default function ClientEditForm({ client }: Props) {
     setSuccess('Client updated successfully!')
 
     startTransition(() => {
-      router.push(`/dashboard/clients/${client.id}`)
+      router.push(`/dashboard/clients/${resolvedClientId}`)
       router.refresh()
     })
   }
@@ -258,7 +264,7 @@ export default function ClientEditForm({ client }: Props) {
             </button>
 
             <Link
-              href={`/dashboard/clients/${client.id}`}
+              href={Number.isNaN(resolvedClientId) ? '/dashboard/clients' : `/dashboard/clients/${resolvedClientId}`}
               className="rounded-md bg-white px-4 py-2 text-slate-700 border border-slate-200 hover:bg-slate-50"
             >
               Cancel
