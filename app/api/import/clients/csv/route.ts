@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/app/api/server/serverClient'
 
 type ClientRow = {
-  clientId?: string
   first_name: string
   last_name: string
   email: string
