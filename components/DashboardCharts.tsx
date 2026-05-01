@@ -13,6 +13,7 @@ import {
 
 import type { TimeSeriesMetrics } from '../components/timeSeriesAggregation'
 import { aggregateMetrics, type Granularity } from '../components/timeSeriesAggregation'
+import RefreshSnapshotsButton from './refresh/refreshButton'
 
 type DashboardChartsProps = {
   metrics?: TimeSeriesMetrics[]
@@ -76,6 +77,9 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
     <div className="space-y-4 mb-8">
 
       {/* Controls */}
+      <div className="flex items-center justify-between mb-8">
+
+      {/* Left group */}
       <div className="flex gap-2">
         {granularityOptions.map(option => (
           <button
@@ -91,6 +95,10 @@ export default function DashboardCharts({ metrics = [] }: DashboardChartsProps) 
           </button>
         ))}
       </div>
+
+      {/* Right group */}
+      <RefreshSnapshotsButton />
+    </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
