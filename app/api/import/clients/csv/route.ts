@@ -15,7 +15,7 @@ type ClientRow = {
 }
 
 function parseCSV(text: string): ClientRow[] {
-  const lines = text.trim().split('\n')
+  const lines = text.trim().replace(/\r/g, '').split('\n')
   if (lines.length < 2) return []
 
   const headers = lines[0].split(',').map((h) => h.trim())
@@ -25,7 +25,7 @@ function parseCSV(text: string): ClientRow[] {
 
     const row: Record<string, string> = {}
     headers.forEach((header, index) => {
-      row[header] = values[index] || ''
+      row[header] = values[index] ?? ''
     })
 
     return row as ClientRow
@@ -75,37 +75,30 @@ export async function POST(req: Request) {
         continue
       }
 
-    const { data: existingClient, error: lookupError } = await supabase
-      .from('clients')
-      .select('email')
-      .eq('email', row.email)
-      .maybeSingle()
-
-    if (lookupError) {
-      console.error('Lookup error on row', rowNumber, lookupError)
-      errors.push(`Row ${rowNumber}: database lookup failed: ${lookupError.message}`)
-      continue
-    }
-
-      if (existingClient) {
-        errors.push(`Row ${rowNumber}: email "${row.email}" already exists.`)
-        continue
-      }
+      // Normalize numeric fields safely
+      const credit = Number(row.goal_credit_score)
+      const netWorth = Number(row.goal_net_worth)
+      const netIncome = Number(row.goal_net_income)
 
       const insertPayload = {
         first_name: row.first_name,
         last_name: row.last_name,
         email: row.email,
         client_dob: row.client_dob || null,
-        goal_credit_score: row.goal_credit_score ? Number(row.goal_credit_score) : null,
-        goal_net_worth: row.goal_net_worth ? Number(row.goal_net_worth) : null,
-        goal_net_income: row.goal_net_income ? Number(row.goal_net_income) : null,
+
+        goal_credit_score: Number.isFinite(credit) ? credit : null,
+        goal_net_worth: Number.isFinite(netWorth) ? netWorth : null,
+        goal_net_income: Number.isFinite(netIncome) ? netIncome : null,
       }
 
-      const { error: insertError } = await supabase.from('clients').insert(insertPayload)
+      const { error: insertError } = await supabase
+        .from('clients')
+        .insert(insertPayload)
+        .select()
 
       if (insertError) {
-        errors.push(`Row ${rowNumber}: failed to insert client "${row.email}".`)
+        console.error(`Insert error row ${rowNumber}:`, insertError)
+        errors.push(`Row ${rowNumber}: ${insertError.message}`)
         continue
       }
 
@@ -119,6 +112,7 @@ export async function POST(req: Request) {
       errors,
     })
   } catch (error) {
+    console.error('CSV import fatal error:', error)
     return NextResponse.json({ error: 'Server error during CSV import.' }, { status: 500 })
   }
 }
