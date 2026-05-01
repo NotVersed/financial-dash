@@ -28,6 +28,20 @@ export async function GET(
     if (error || !data) {
         return NextResponse.json({ error: 'Client not found' }, { status: 404 })
     }
+    const { data: financial } = await supabase
+        .from('financial_info')
+        .select('*')
+        .eq('client_id', Number(id))
+        .order('measurement_date', { ascending: false })
+        .limit(1)
+        .single()
+
+    const clientWithFinancials = {
+        ...data,
+        current_credit_score: financial?.credit_score ?? '',
+        current_net_worth: financial?.net_worth ?? '',
+        current_net_income: financial?.net_income ?? '',
+    }
 
     const workbook = new ExcelJS.Workbook()
     const sheet = workbook.addWorksheet('Client')
@@ -48,7 +62,7 @@ export async function GET(
         { header: 'last_updated', key: 'last_updated' },
     ]
 
-    sheet.addRow(data)
+    sheet.addRow(clientWithFinancials)
 
     const buffer = await workbook.xlsx.writeBuffer()
 

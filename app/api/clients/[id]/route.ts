@@ -8,7 +8,7 @@ import {
 } from '@/app/dashboard/clients/dataInformation'
 
 const clientSelect = `
-  id,
+  client_id,
   first_name,
   last_name,
   email,
@@ -28,7 +28,7 @@ const clientSelect = `
  */
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
@@ -40,7 +40,8 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const clientId = Number(params.id)
+  const { id } = await params
+  const clientId = Number(id)
 
   if (Number.isNaN(clientId)) {
     return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
@@ -52,7 +53,7 @@ export async function GET(
   const { data: client, error: clientError } = await supabase
     .from(CLIENT_TABLE_NAME)
     .select(clientSelect)
-    .eq('id', clientId)
+    .eq(CLIENT_ID_COL, clientId)
     .maybeSingle()
 
   if (clientError || !client) {
@@ -99,7 +100,7 @@ export async function GET(
  */
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
@@ -111,7 +112,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const clientId = Number(params.id)
+  const { id } = await params
+  const clientId = Number(id)
 
   if (Number.isNaN(clientId)) {
     return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
@@ -133,7 +135,7 @@ export async function PATCH(
   const { data: updatedClient, error: clientError } = await supabase
     .from(CLIENT_TABLE_NAME)
     .update(clientUpdates)
-    .eq('id', clientId)
+    .eq(CLIENT_ID_COL, clientId)
     .select(clientSelect)
     .maybeSingle()
 
@@ -142,7 +144,7 @@ export async function PATCH(
   }
 
   // -------------------------
-  // 2. Insert metrics snapshot (append-only history)
+  // 2. Insert metrics snapshot (history row per update)
   // -------------------------
   const hasFinancialData =
     body.current_net_income != null ||
@@ -153,7 +155,7 @@ export async function PATCH(
     const { error: metricsError } = await supabase
       .from(METRICS_TABLE_NAME)
       .insert({
-        client_id: clientId, // IMPORTANT: FK mapping (clients.id → metrics.client_id)
+        client_id: clientId,
         net_income: body.current_net_income ?? null,
         net_worth: body.current_net_worth ?? null,
         credit_score: body.current_credit_score ?? null,
@@ -195,7 +197,7 @@ export async function PATCH(
  */
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
@@ -207,7 +209,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const clientId = Number(params.id)
+  const { id } = await params
+  const clientId = Number(id)
 
   if (Number.isNaN(clientId)) {
     return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
@@ -216,7 +219,7 @@ export async function DELETE(
   const { error } = await supabase
     .from(CLIENT_TABLE_NAME)
     .delete()
-    .eq('id', clientId)
+    .eq(CLIENT_ID_COL, clientId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -7,9 +7,6 @@ type ClientRow = {
   last_name: string
   email: string
   client_dob: string
-  current_credit_score: string
-  current_net_worth: string
-  current_net_income: string
   goal_credit_score: string
   goal_net_worth: string
   goal_net_income: string
@@ -100,9 +97,6 @@ export async function POST(req: Request) {
         last_name: row.last_name,
         email: row.email,
         client_dob: row.client_dob || null,
-        current_credit_score: row.current_credit_score ? Number(row.current_credit_score) : null,
-        current_net_worth: row.current_net_worth ? Number(row.current_net_worth) : null,
-        current_net_income: row.current_net_income ? Number(row.current_net_income) : null,
         goal_credit_score: row.goal_credit_score ? Number(row.goal_credit_score) : null,
         goal_net_worth: row.goal_net_worth ? Number(row.goal_net_worth) : null,
         goal_net_income: row.goal_net_income ? Number(row.goal_net_income) : null,

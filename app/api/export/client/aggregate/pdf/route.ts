@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit'
 import { createClient } from '@/lib/supabase/server'
 import { CLIENT_TABLE_NAME } from '@/app/dashboard/clients/dataInformation'
-import { buildStats } from './stats'
-import { drawBarChart } from './chart'
+import { buildStats } from '../../shared/stats'
+import { drawBarChart } from '../../shared/chart'
 
 export async function GET() {
     const supabase = await createClient()
@@ -24,7 +24,26 @@ export async function GET() {
         return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
     }
 
-    const stats = buildStats(data)
+    const clientsWithFinancials = await Promise.all(
+        data.map(async (client) => {
+            const { data: financial } = await supabase
+                .from('financial_info')
+                .select('*')
+                .eq('client_id', client.client_id)
+                .order('measurement_date', { ascending: false })
+                .limit(1)
+                .single()
+
+            return {
+                ...client,
+                current_credit_score: financial?.credit_score,
+                current_net_worth: financial?.net_worth,
+                current_net_income: financial?.net_income,
+            }
+        })
+    )
+
+    const stats = buildStats(clientsWithFinancials)
 
     const formatMoney = (n: number) => {
         if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
@@ -45,7 +64,7 @@ export async function GET() {
     doc.fontSize(10).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' })
     doc.moveDown()
 
-    data.forEach((client, index) => {
+    clientsWithFinancials.forEach((client, index) => {
         if (index > 0) {
             doc.addPage()
         }
@@ -61,14 +80,13 @@ export async function GET() {
         doc.text(`Date of Birth: ${client.client_dob || 'N/A'}`)
         doc.moveDown()
 
-        doc.text(`Current Credit Score: ${client.current_credit_score}`)
-        doc.text(`Current Net Worth: ${client.current_net_worth}`)
-        doc.text(`Current Net Income: ${client.current_net_income}`)
+        doc.text(`Current Credit Score: ${client.current_credit_score ?? 'N/A'}`)
+        doc.text(`Current Net Worth: ${client.current_net_worth ?? 'N/A'}`)
+        doc.text(`Current Net Income: ${client.current_net_income ?? 'N/A'}`)
         doc.moveDown()
-
-        doc.text(`Goal Credit Score: ${client.goal_credit_score}`)
-        doc.text(`Goal Net Worth: ${client.goal_net_worth}`)
-        doc.text(`Goal Net Income: ${client.goal_net_income}`)
+        doc.text(`Goal Credit Score: ${client.goal_credit_score ?? 'N/A'}`)
+        doc.text(`Goal Net Worth: ${client.goal_net_worth ?? 'N/A'}`)
+        doc.text(`Goal Net Income: ${client.goal_net_income ?? 'N/A'}`)
         doc.moveDown()
 
         doc.text(`Created: ${client.created}`)
@@ -89,20 +107,20 @@ export async function GET() {
 
     doc.font('Helvetica-Bold').fontSize(10).fillColor('black').text('Credit Score', 130, 115)
     drawBarChart(doc, 80, 140, 480, 100, [
-    { label: 'mean',   currentVal: stats.creditScore.mean,   goalVal: stats.goalCreditScore.mean },
-    { label: 'median', currentVal: stats.creditScore.median, goalVal: stats.goalCreditScore.median },
+        { label: 'mean', currentVal: stats.creditScore.mean, goalVal: stats.goalCreditScore.mean },
+        { label: 'median', currentVal: stats.creditScore.median, goalVal: stats.goalCreditScore.median },
     ], 900, (n) => Math.round(n).toString())
 
     doc.font('Helvetica-Bold').fontSize(10).fillColor('black').text('Net Worth', 130, 275)
     drawBarChart(doc, 80, 300, 480, 100, [
-    { label: 'mean',   currentVal: stats.netWorth.mean,   goalVal: stats.goalNetWorth.mean },
-    { label: 'median', currentVal: stats.netWorth.median, goalVal: stats.goalNetWorth.median },
+        { label: 'mean', currentVal: stats.netWorth.mean, goalVal: stats.goalNetWorth.mean },
+        { label: 'median', currentVal: stats.netWorth.median, goalVal: stats.goalNetWorth.median },
     ], Math.max(stats.netWorth.max, stats.goalNetWorth.max) * 1.2, formatMoney)
 
     doc.font('Helvetica-Bold').fontSize(10).fillColor('black').text('Net Income', 130, 435)
     drawBarChart(doc, 80, 460, 480, 100, [
-    { label: 'mean',   currentVal: stats.netIncome.mean,   goalVal: stats.goalNetIncome.mean },
-    { label: 'median', currentVal: stats.netIncome.median, goalVal: stats.goalNetIncome.median },
+        { label: 'mean', currentVal: stats.netIncome.mean, goalVal: stats.goalNetIncome.mean },
+        { label: 'median', currentVal: stats.netIncome.median, goalVal: stats.goalNetIncome.median },
     ], Math.max(stats.netIncome.max, stats.goalNetIncome.max) * 1.2, formatMoney)
 
     doc.end()

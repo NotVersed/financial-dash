@@ -10,6 +10,7 @@ export function drawBarChart(
   maxVal: number,
   formatVal: (n: number) => string
 ) {
+  const safeMax = maxVal > 0 && !isNaN(maxVal) ? maxVal : 1
   const barWidth = 28
   const groupGap = 60
   const chartBottom = y + height
@@ -17,7 +18,7 @@ export function drawBarChart(
   const gridLines = 4
   for (let i = 0; i <= gridLines; i++) {
     const lineY = y + (height / gridLines) * i
-    const val = maxVal - (maxVal / gridLines) * i
+    const val = safeMax - (safeMax / gridLines) * i
     doc.moveTo(x, lineY).lineTo(x + width, lineY)
        .strokeColor('#E5E5E5').lineWidth(0.5).stroke()
     doc.fontSize(8).fillColor('#999').text(formatVal(val), x - 42, lineY - 5, { width: 38, align: 'right' })
@@ -26,13 +27,13 @@ export function drawBarChart(
   bars.forEach((bar, i) => {
     const groupX = x + 20 + i * groupGap
 
-    const curH = (bar.currentVal / maxVal) * height
+    const curH = (bar.currentVal / safeMax) * height
     doc.rect(groupX, chartBottom - curH, barWidth, curH)
        .fillColor('#1D9E75').fill()
     doc.fontSize(8).fillColor('#1D9E75')
        .text(formatVal(bar.currentVal), groupX - 4, chartBottom - curH - 12, { width: barWidth + 8, align: 'center' })
 
-    const goalH = (bar.goalVal / maxVal) * height
+    const goalH = (bar.goalVal / safeMax) * height
     doc.rect(groupX + barWidth + 4, chartBottom - goalH, barWidth, goalH)
        .fillColor('#AFA9EC').fill()
     doc.fontSize(8).fillColor('#534AB7')
