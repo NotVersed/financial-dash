@@ -24,6 +24,25 @@ export function LoginContent() {
 
   const supabase = createClient()
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setLoading(true)
+  setError(null)
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { 
+    redirectTo: `${location.origin}`, // TODO: change this to an actual "reset password" href
+  })
+
+  if (error) {
+    setError(error.message)
+    setLoading(false)
+    return
+  }
+
+  setResetSent(true)
+  setLoading(false)
+}
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
