@@ -71,9 +71,15 @@ async function getDashboardStats() {
 
   const totalLoansCount = loans?.length || 0
 
-  const { count: milestonesCount } = await supabase
-    .from('milestones')
-    .select('*', { count: 'exact', head: true })
+  const { data: clientGoals } = await supabase
+    .from('CLIENT_TABLE_NAME')
+    .select('goal_credit_score, goal_net_income, goal_net_worth, current_credit_score, current_net_income, current_net_worth')
+   let milestonesCount=0
+   for (const c of clientGoals ?? []) {
+	if (c.goal_credit_score != null && c.current_credit_score != null && c.current_credit_score >= c.goal_credit_score) milestoneCount++
+	if (c.goal_net_income != null && c.current_credit_score != null && c.current_net_income >= c.goal_net_income) milestonesCount++
+	if (c.goal_net_worth != null && c.current_net_worth != null && c.current_net_worth >= c.goal_net_worth) milestonesCount++
+}
 
   // -------------------------
   // TIME SERIES NOW COMES FROM MATERIALIZED VIEW
