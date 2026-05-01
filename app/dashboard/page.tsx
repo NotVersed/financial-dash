@@ -60,16 +60,11 @@ async function getDashboardStats() {
 
 
   // -------------------------
-  // LOANS / MILESTONES
+  //  MILESTONES & TOTAL NUM OF FINANCIAL RECORDS
   // -------------------------
-  const { data: loans } = await supabase
-    .from('loan_participation')
-    .select('loan_amount')
-
-  const totalLoansAmount =
-    loans?.reduce((sum, l) => sum + Number(l.loan_amount), 0) || 0
-
-  const totalLoansCount = loans?.length || 0
+  const { count: financialEntries } = await supabase
+  .from('financial_info')
+  .select('*', { count: 'exact', head: true })
 
   const { data: milestonesCount, error: milestonesError } = await supabase
     .rpc('get_milestones_achieved')
@@ -100,8 +95,7 @@ async function getDashboardStats() {
     avgCreditScore,
     avgNetIncome,
     avgNetWorth,
-    totalLoansAmount,
-    totalLoansCount,
+    financialEntries,
     milestonesCount: milestonesCount || 0,
 
     // already clean from SQL
@@ -150,11 +144,11 @@ export default async function DashboardPage() {
       color: 'text-purple-600',
     },
     {
-      title: 'Total Loans Disbursed',
-      value: `$${stats.totalLoansAmount.toLocaleString()}`,
-      description: `${stats.totalLoansCount} loans active`,
-      icon: PiggyBank,
-      color: 'text-orange-600',
+      title: 'Financial Updates Logged',
+      value: stats.financialEntries || 0,
+      description: 'Total financial snapshots recorded',
+      icon: TrendingUp,
+      color: 'text-blue-600',
     },
     {
       title: 'Milestones Achieved',
