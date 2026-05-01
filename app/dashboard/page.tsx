@@ -60,26 +60,23 @@ async function getDashboardStats() {
 
 
   // -------------------------
-  // LOANS / MILESTONES
+  //  MILESTONES & TOTAL NUM OF FINANCIAL RECORDS
   // -------------------------
-  const { data: loans } = await supabase
-    .from('loan_participation')
-    .select('loan_amount')
+  const { count: financialEntries } = await supabase
+  .from('financial_info')
+  .select('*', { count: 'exact', head: true })
 
-  const totalLoansAmount =
-    loans?.reduce((sum, l) => sum + Number(l.loan_amount), 0) || 0
+  const { data: milestonesData, error: milestonesError } = await supabase
+    .rpc('get_milestones_achieved')
 
-  const totalLoansCount = loans?.length || 0
 
-  const { data: clientGoals } = await supabase
-    .from('CLIENT_TABLE_NAME')
-    .select('goal_credit_score, goal_net_income, goal_net_worth, current_credit_score, current_net_income, current_net_worth')
-   let milestonesCount=0
-   for (const c of clientGoals ?? []) {
-	if (c.goal_credit_score != null && c.current_credit_score != null && c.current_credit_score >= c.goal_credit_score) milestoneCount++
-	if (c.goal_net_income != null && c.current_credit_score != null && c.current_net_income >= c.goal_net_income) milestonesCount++
-	if (c.goal_net_worth != null && c.current_net_worth != null && c.current_net_worth >= c.goal_net_worth) milestonesCount++
-}
+  if (milestonesError) {
+    console.error('Milestones RPC error:', milestonesError)
+  }
+
+  const milestonesCount = milestonesData || 0
+
+
 
   // -------------------------
   // TIME SERIES NOW COMES FROM MATERIALIZED VIEW
@@ -103,8 +100,7 @@ async function getDashboardStats() {
     avgCreditScore,
     avgNetIncome,
     avgNetWorth,
-    totalLoansAmount,
-    totalLoansCount,
+    financialEntries,
     milestonesCount: milestonesCount || 0,
 
     // already clean from SQL
@@ -153,11 +149,11 @@ export default async function DashboardPage() {
       color: 'text-purple-600',
     },
     {
-      title: 'Total Loans Disbursed',
-      value: `$${stats.totalLoansAmount.toLocaleString()}`,
-      description: `${stats.totalLoansCount} loans active`,
-      icon: PiggyBank,
-      color: 'text-orange-600',
+      title: 'Financial Updates Logged',
+      value: stats.financialEntries || 0,
+      description: 'Total financial snapshots recorded',
+      icon: TrendingUp,
+      color: 'text-blue-600',
     },
     {
       title: 'Milestones Achieved',

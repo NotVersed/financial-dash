@@ -21,6 +21,24 @@ export async function GET() {
     if (error || !data) {
         return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
     }
+    const clientsWithFinancials = await Promise.all(
+        data.map(async (client) => {
+            const { data: financial } = await supabase
+                .from('financial_info')
+                .select('*')
+                .eq('client_id', client.client_id)
+                .order('measurement_date', { ascending: false })
+                .limit(1)
+                .single()
+
+            return {
+                ...client,
+                current_credit_score: financial?.credit_score ?? '',
+                current_net_worth: financial?.net_worth ?? '',
+                current_net_income: financial?.net_income ?? '',
+            }
+        })
+    )
 
     const headers = [
         'client_id',
@@ -46,13 +64,11 @@ export async function GET() {
         key: h,
     }))
 
-    data.forEach(client => {
+    clientsWithFinancials.forEach(client => { 
         const row: any = {}
-
         headers.forEach(h => {
             row[h] = client[h] ?? ''
         })
-
         sheet.addRow(row)
     })
 

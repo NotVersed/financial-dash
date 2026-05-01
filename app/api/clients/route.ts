@@ -66,7 +66,8 @@ export async function GET() {
     // 3. Merge clients + latest metrics
     // -------------------------
     const enrichedClients = (clients ?? []).map((c: any) => {
-      const latest = latestByClient.get(c.id)
+      const normalizedClientId = Number(c.client_id ?? c.id)
+      const latest = latestByClient.get(normalizedClientId)
 
       return normalizeClient({
         ...c,
@@ -151,11 +152,13 @@ export async function POST(req: Request) {
       current_credit_score != null
 
     if (hasMetrics) {
+      const insertedClientId = Number(client.client_id ?? client.id)
+
       const { error: metricsError } = await supabase
         .from(METRICS_TABLE_NAME)
         .insert([
           {
-            client_id: client.id,
+            client_id: insertedClientId,
             net_income: current_net_income ?? null,
             net_worth: current_net_worth ?? null,
             credit_score: current_credit_score ?? null,

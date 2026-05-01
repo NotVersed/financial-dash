@@ -28,6 +28,7 @@ type Props = {
 export default function ClientEditForm({ client }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const resolvedClientId = Number(client.id)
 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -98,7 +99,12 @@ export default function ClientEditForm({ client }: Props) {
       notes: formData.notes.trim() || null,
     }
 
-    const res = await fetch(`/api/clients/${client.id}`, {
+    if (Number.isNaN(resolvedClientId)) {
+      setError('Invalid client ID')
+      return
+    }
+
+    const res = await fetch(`/api/clients/${resolvedClientId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -115,7 +121,7 @@ export default function ClientEditForm({ client }: Props) {
     setSuccess('Client updated successfully!')
 
     startTransition(() => {
-      router.push(`/dashboard/clients/${client.id}`)
+      router.push(`/dashboard/clients/${resolvedClientId}`)
       router.refresh()
     })
   }
@@ -137,31 +143,31 @@ export default function ClientEditForm({ client }: Props) {
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 First Name *
-              </label>
-              <input
-                name="first_name"
+              <input type="text" name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
                 className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
+              </label>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Last Name *
-              </label>
+              
               <input
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
                 className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
+              </label>
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Email *
-              </label>
+              
               <input
                 name="email"
                 type="email"
@@ -169,9 +175,13 @@ export default function ClientEditForm({ client }: Props) {
                 onChange={handleChange}
                 className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
+              </label>
             </div>
 
             <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Status *
+              
               <select
                 name="status"
                 value={formData.status}
@@ -181,6 +191,7 @@ export default function ClientEditForm({ client }: Props) {
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
+              </label>
             </div>
           </div>
 
@@ -196,6 +207,7 @@ export default function ClientEditForm({ client }: Props) {
                 <input
                   name="current_credit_score"
                   type="number"
+                  aria-label="Current credit score"
                   value={formData.current_credit_score}
                   onChange={handleChange}
                   className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-2xl font-bold text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -212,6 +224,7 @@ export default function ClientEditForm({ client }: Props) {
                 <input
                   name="current_net_income"
                   type="number"
+                  aria-label="Current net income"
                   value={formData.current_net_income}
                   onChange={handleChange}
                   className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-2xl font-bold text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -231,6 +244,7 @@ export default function ClientEditForm({ client }: Props) {
                 <input
                   name="current_net_worth"
                   type="number"
+                  aria-label="Current net worth"
                   value={formData.current_net_worth}
                   onChange={handleChange}
                   className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-2xl font-bold text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -258,7 +272,7 @@ export default function ClientEditForm({ client }: Props) {
             </button>
 
             <Link
-              href={`/dashboard/clients/${client.id}`}
+              href={Number.isNaN(resolvedClientId) ? '/dashboard/clients' : `/dashboard/clients/${resolvedClientId}`}
               className="rounded-md bg-white px-4 py-2 text-slate-700 border border-slate-200 hover:bg-slate-50"
             >
               Cancel

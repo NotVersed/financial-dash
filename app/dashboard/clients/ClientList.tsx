@@ -33,15 +33,33 @@ export default function ClientList({ clients = [] }: ClientListProps) {
   const [success, setSuccess] = useState(false)
   const router = useRouter()
 
-  const filteredClients = clients.filter((client) => {
-    const searchLower = search.toLowerCase()
-    const displayName = getClientDisplayName(client).toLowerCase()
+  const filteredClients = clients
+    .filter((client) => {
+      const searchLower = search.toLowerCase()
+      const displayName = getClientDisplayName(client).toLowerCase()
 
-    return (
-      displayName.includes(searchLower) ||
-      client.email?.toLowerCase().includes(searchLower)
-    )
-  })
+      return (
+        displayName.includes(searchLower) ||
+        client.email?.toLowerCase().includes(searchLower)
+      )
+    })
+    .sort((a, b) => {
+      const firstNameA = (a.first_name ?? '').trim()
+      const firstNameB = (b.first_name ?? '').trim()
+
+      const firstNameCompare = firstNameA.localeCompare(firstNameB, undefined, {
+        sensitivity: 'base',
+      })
+
+      if (firstNameCompare !== 0) return firstNameCompare
+
+      const lastNameA = (a.last_name ?? '').trim()
+      const lastNameB = (b.last_name ?? '').trim()
+
+      return lastNameA.localeCompare(lastNameB, undefined, {
+        sensitivity: 'base',
+      })
+    })
 
   const handleSubmit = async () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {

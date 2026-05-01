@@ -1,4 +1,4 @@
-console.log('[ClientDetailPage] PAGE EXECUTED')
+
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +21,9 @@ import { createClient } from '@/lib/supabase/server'
 import NotesSection from './NotesSection'
 import DeleteClientButton from './DeleteClientButton'
 import { METRICS_TABLE_NAME } from '@/app/dashboard/clients/dataInformation'
-import { log } from 'console'
+import ExportClientButton from './ExportClientButton'
+
+import ClientChart from './ClientCharts'
 
 type Note = {
   note_id: number
@@ -45,15 +47,15 @@ export default async function ClientDetailPage({
 
   const clientId = Number(id)
 
-// Guard invalid route param early
-if (Number.isNaN(clientId)) {
-  console.log('[ClientDetailPage] INVALID CLIENT ID PARAM:', {
-    raw: id,
-    parsed: clientId,
-  })
+  // Guard invalid route param early
+  if (Number.isNaN(clientId)) {
+    console.log('[ClientDetailPage] INVALID CLIENT ID PARAM:', {
+      raw: id,
+      parsed: clientId,
+    })
 
-  notFound()
-}
+    notFound()
+  }
 
   const supabase = await createClient()
 
@@ -64,7 +66,7 @@ if (Number.isNaN(clientId)) {
   if (!user) redirect('/login')
 
   // -------------------------
-  // Client (source of truth)
+  // Client data
   // -------------------------
   const { data: client, error: clientError } = await supabase
     .from('clients')
@@ -86,6 +88,21 @@ if (Number.isNaN(clientId)) {
 
   const latest = metrics?.[0] ?? null
 
+  // colors for charts and bars
+  const creditScoreColor = "#5da292"
+  const netIncomeColor = "#EE99AA"
+  const netWorthColor = "#6d66cc"
+
+  // ------------------------
+  // For Chart - time series for 1 client
+  // --------------------
+
+  const { data: timeSeries } = await supabase
+    .from(METRICS_TABLE_NAME)
+    .select('measurement_date, credit_score, net_income, net_worth')
+    .eq('client_id', clientId)
+    .order('measurement_date', { ascending: true })
+
   // -------------------------
   // Notes
   // -------------------------
@@ -93,6 +110,15 @@ if (Number.isNaN(clientId)) {
     .from('notes')
     .select('*')
     .eq('client_id', clientId)
+
+
+  const chartMetrics = (timeSeries ?? []).map(row => ({
+    date: row.measurement_date,
+    creditScore: row.credit_score,
+    netIncome: row.net_income,
+    netWorth: row.net_worth,
+  }))
+
 
   const sortedNotes: Note[] = (notesData ?? []).sort(
     (a, b) =>
@@ -156,71 +182,124 @@ if (Number.isNaN(clientId)) {
 
       </div>
 
-      {/* Goal Progress */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Goal Progress</CardTitle>
-          <CardDescription>Current vs Target Goals</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          
-          {/* Credit Score Progress */}
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium">Credit Score</span>
-              <span className="text-slate-600">
-                {latest?.credit_score ?? 0} / {client.goal_credit_score ?? '—'}
-              </span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-3">
-              <div 
-                className="bg-blue-600 h-3 rounded-full transition-all"
-                style={{ 
-                  width: `${Math.min(100, ((latest?.credit_score ?? 0) / (client.goal_credit_score || 1)) * 100)}%` 
-                }}
-              />
-            </div>
-          </div>
 
-          {/* Net Income Progress */}
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium">Net Income</span>
-              <span className="text-slate-600">
-                ${(latest?.net_income ?? 0).toLocaleString()} / ${(client.goal_net_income ?? 0).toLocaleString()}
-              </span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-3">
-              <div 
-                className="bg-green-600 h-3 rounded-full transition-all"
-                style={{ 
-                  width: `${Math.min(100, ((latest?.net_income ?? 0) / (client.goal_net_income || 1)) * 100)}%` 
-                }}
-              />
-            </div>
-          </div>
 
-          {/* Net Worth Progress */}
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium">Net Worth</span>
-              <span className="text-slate-600">
-                ${(latest?.net_worth ?? 0).toLocaleString()} / ${(client.goal_net_worth ?? 0).toLocaleString()}
-              </span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-3">
-              <div 
-                className="bg-emerald-600 h-3 rounded-full transition-all"
-                style={{ 
-                  width: `${Math.min(100, ((latest?.net_worth ?? 0) / (client.goal_net_worth || 1)) * 100)}%` 
-                }}
-              />
-            </div>
-          </div>
+      {/* Goal Progress + Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
-        </CardContent>
-      </Card>
+        {/* LEFT: Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Financial Trends</CardTitle>
+            <CardDescription>
+              Credit score, income, and net worth over time
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ClientChart data={chartMetrics} creditScoreStroke={creditScoreColor} netIncomeStroke={netIncomeColor} netWorthStroke={netWorthColor} />
+          </CardContent>
+        </Card>
 
+        {/* RIGHT: Goal Progress */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Goal Progress</CardTitle>
+            <CardDescription>Current vs Target Goals</CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+
+            {/* Credit Score */}
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium">Credit Score</span>
+                <span className="text-slate-600">
+                  {latest?.credit_score ?? 0} / {client.goal_credit_score ?? '—'}
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3">
+                <div
+                  className="h-3 rounded-full transition-all"
+                  style={{
+                    backgroundColor: creditScoreColor,
+                    width: `${client.goal_credit_score
+                        ? Math.min(
+                          100,
+                          ((latest?.credit_score ?? 0) /
+                            client.goal_credit_score) *
+                          100
+                        )
+                        : 0
+                      }%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Net Income */}
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium">Net Income</span>
+                <span className="text-slate-600">
+                  ${(latest?.net_income ?? 0).toLocaleString()} /{' '}
+                  {client.goal_net_income
+                    ? `$${client.goal_net_income.toLocaleString()}`
+                    : '—'}
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3">
+                <div
+                  className="h-3 rounded-full transition-all"
+                  style={{
+                    backgroundColor: netIncomeColor,
+                    width: `${client.goal_net_income
+                        ? Math.min(
+                          100,
+                          ((latest?.net_income ?? 0) /
+                            client.goal_net_income) *
+                          100
+                        )
+                        : 0
+                      }%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Net Worth */}
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium">Net Worth</span>
+                <span className="text-slate-600">
+                  ${(latest?.net_worth ?? 0).toLocaleString()} /{' '}
+                  {client.goal_net_worth
+                    ? `$${client.goal_net_worth.toLocaleString()}`
+                    : '—'}
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3">
+                <div
+                  className="h-3 rounded-full transition-all"
+                  style={{
+                    backgroundColor: netWorthColor,
+                    width: `${client.goal_net_worth
+                        ? Math.min(
+                          100,
+                          ((latest?.net_worth ?? 0) /
+                            client.goal_net_worth) *
+                          100
+                        )
+                        : 0
+                      }%`,
+                  }}
+                />
+              </div>
+            </div>
+
+          </CardContent>
+        </Card>
+
+      </div>
       {/* Notes */}
       <Card>
         <CardHeader>
@@ -240,6 +319,8 @@ if (Number.isNaN(clientId)) {
         >
           Edit Client
         </Link>
+
+        <ExportClientButton clientId={clientId} />
 
         <DeleteClientButton
           clientId={clientId}
