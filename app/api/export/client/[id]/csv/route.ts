@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { CLIENT_TABLE_NAME } from '@/app/dashboard/clients/dataInformation'
 
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -30,6 +31,21 @@ export async function GET(
     return NextResponse.json({ error: 'Client not found' }, { status: 404 })
   }
 
+  const { data: financial } = await supabase
+    .from('financial_info')
+    .select('*')
+    .eq('client_id', Number(id))
+    .order('measurement_date', { ascending: false })
+    .limit(1)
+    .single()
+
+  const clientWithFinancials = {
+    ...data,
+    current_credit_score: financial?.credit_score ?? '',
+    current_net_worth: financial?.net_worth ?? '',
+    current_net_income: financial?.net_income ?? '',
+  }
+
   const headers = [
     'client_id',
     'first_name',
@@ -49,7 +65,7 @@ export async function GET(
   const escape = (val: any) =>
     `"${String(val ?? '').replace(/"/g, '""')}"`
 
-  const row = headers.map(h => escape(data[h])).join(',')
+  const row = headers.map(h => escape(clientWithFinancials[h])).join(',')
 
   const csv = [headers.join(','), row].join('\n')
 

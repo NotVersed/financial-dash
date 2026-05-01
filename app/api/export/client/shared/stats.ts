@@ -1,4 +1,5 @@
 export function computeStats(values: number[]) {
+  if (values.length === 0) return { mean: 0, median: 0, min: 0, max: 0 }
   const sorted = [...values].sort((a, b) => a - b)
   const sum = sorted.reduce((a, b) => a + b, 0)
   const mid = Math.floor(sorted.length / 2)
