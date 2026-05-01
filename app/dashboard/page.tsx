@@ -71,9 +71,12 @@ async function getDashboardStats() {
 
   const totalLoansCount = loans?.length || 0
 
-  const { count: milestonesCount } = await supabase
-    .from('milestones')
-    .select('*', { count: 'exact', head: true })
+  const { data: milestonesCount, error: milestonesError } = await supabase
+    .rpc('get_milestones_achieved')
+
+  if (milestonesError) {
+    console.error('Milestones RPC error:', milestonesError)
+  }
 
   // -------------------------
   // TIME SERIES NOW COMES FROM MATERIALIZED VIEW
