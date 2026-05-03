@@ -109,7 +109,7 @@ export default async function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 mb-4">
+            <p className="text-sm text-slate-500 mb-9">
               Imports credit scores, net income, net worth, and savings milestones for all clients.
             </p>
             <Link
@@ -122,17 +122,6 @@ export default async function ReportsPage() {
         </Card>
       </div>
 
-      <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent Exports</CardTitle>
-            <CardDescription>Your last generated reports</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-400">No reports generated yet. Export a report above to get started.</p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
 }
