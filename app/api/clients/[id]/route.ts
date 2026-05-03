@@ -21,21 +21,13 @@ const clientSelect = `
   goal_net_income
 `
 
-/**
- * GET /api/clients/[id]
- * Client comes from clients table
- * Latest financial snapshot comes from metrics table
- */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -43,13 +35,12 @@ export async function GET(
   const { id } = await params
   const clientId = Number(id)
 
+  console.log('[GET] clientId:', clientId)
+
   if (Number.isNaN(clientId)) {
     return NextResponse.json({ error: 'Invalid client id' }, { status: 400 })
   }
 
-  // -------------------------
-  // 1. Get client
-  // -------------------------
   const { data: client, error: clientError } = await supabase
     .from(CLIENT_TABLE_NAME)
     .select(clientSelect)
@@ -57,31 +48,19 @@ export async function GET(
     .maybeSingle()
 
   if (clientError || !client) {
+    console.log('[GET] client error:', clientError)
     return NextResponse.json({ error: 'Client not found' }, { status: 404 })
   }
 
-  // -------------------------
-  // 2. Get latest metrics (THIS is the key change)
-  // -------------------------
-  const { data: metrics, error: metricsError } = await supabase
+  const { data: metrics } = await supabase
     .from(METRICS_TABLE_NAME)
     .select('net_income, net_worth, credit_score, measurement_date')
     .eq('client_id', clientId)
     .order('measurement_date', { ascending: false })
     .limit(1)
 
-  if (metricsError) {
-    return NextResponse.json(
-      { error: metricsError.message },
-      { status: 500 }
-    )
-  }
-
   const latest = metrics?.[0] ?? null
 
-  // -------------------------
-  // 3. Merge response
-  // -------------------------
   return NextResponse.json({
     clientInfo: normalizeClient({
       ...client,
@@ -92,22 +71,13 @@ export async function GET(
   })
 }
 
-/**
- * PATCH /api/clients/[id]
- * Updates:
- * - clients table → identity fields
- * - metrics table → financial snapshot (append-only style)
- */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -120,15 +90,17 @@ export async function PATCH(
   }
 
   const body = await request.json()
+  console.log('[PATCH] body:', body)
 
-  // -------------------------
-  // 1. Update client table (identity fields only)
-  // -------------------------
+  // ✅ FIX: include goals
   const clientUpdates = {
     first_name: body.first_name,
     last_name: body.last_name,
     email: body.email,
     status: body.status,
+    goal_credit_score: body.goal_credit_score,
+    goal_net_income: body.goal_net_income,
+    goal_net_worth: body.goal_net_worth,
     last_updated: new Date().toISOString(),
   }
 
@@ -140,12 +112,11 @@ export async function PATCH(
     .maybeSingle()
 
   if (clientError) {
+    console.log('[PATCH] client error:', clientError)
     return NextResponse.json({ error: clientError.message }, { status: 500 })
   }
 
-  // -------------------------
-  // 2. Insert metrics snapshot (history row per update)
-  // -------------------------
+  // Metrics insert (optional)
   const hasFinancialData =
     body.current_net_income != null ||
     body.current_net_worth != null ||
@@ -163,16 +134,11 @@ export async function PATCH(
       })
 
     if (metricsError) {
-      return NextResponse.json(
-        { error: metricsError.message },
-        { status: 500 }
-      )
+      console.log('[PATCH] metrics error:', metricsError)
+      return NextResponse.json({ error: metricsError.message }, { status: 500 })
     }
   }
 
-  // -------------------------
-  // 3. Return merged client
-  // -------------------------
   const { data: latestMetrics } = await supabase
     .from(METRICS_TABLE_NAME)
     .select('net_income, net_worth, credit_score')
@@ -192,19 +158,13 @@ export async function PATCH(
   })
 }
 
-/**
- * DELETE /api/clients/[id]
- */
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
