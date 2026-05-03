@@ -30,9 +30,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { email, password, fullName } = await req.json()
+    const { email, password, fullName, role } = await req.json()
     const trimmedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
     const trimmedFullName = typeof fullName === 'string' ? fullName.trim() : ''
+    const resolvedRole = role === 'admin' ? 'admin' : 'employee'
 
     if (!trimmedEmail || !password) {
       return NextResponse.json(
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
       password,
       email_confirm: true,
       app_metadata: {
-        role: 'admin',
+        role: resolvedRole,
       },
       user_metadata: {
         created_by_admin_id: user.id,
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
         id: createdUserId,
         email: trimmedEmail,
         full_name: trimmedFullName || null,
-        role: 'admin',
+        role: resolvedRole,
         is_active: true,
       }, { onConflict: 'id' })
 
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'Admin account created successfully.',
+        message: `${resolvedRole === 'admin' ? 'Admin' : 'Employee'} account created successfully.`,
         userId: createdUserId,
         email: trimmedEmail,
       },

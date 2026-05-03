@@ -9,6 +9,7 @@ export default function CreateAdminAccountCard() {
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState<'employee' | 'admin'>('employee')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -18,6 +19,7 @@ export default function CreateAdminAccountCard() {
     setEmail('')
     setFullName('')
     setPassword('')
+    setRole('employee')
     setError(null)
     setSuccess(null)
     setLoading(false)
@@ -35,7 +37,7 @@ export default function CreateAdminAccountCard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, fullName }),
+        body: JSON.stringify({ email, password, fullName, role }),
       })
 
       const data = await response.json()
@@ -44,9 +46,10 @@ export default function CreateAdminAccountCard() {
         throw new Error(data.error || 'Failed to create admin account')
       }
 
-      setSuccess(`Admin account created for ${data.email ?? email}.`)
+      setSuccess(`${role === 'admin' ? 'Admin' : 'Employee'} account created for ${data.email ?? email}.`)
       window.setTimeout(() => {
         closeModal()
+        window.location.reload()
       }, 1200)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create admin account'
@@ -66,8 +69,8 @@ export default function CreateAdminAccountCard() {
                 <UserPlus className="h-5 w-5 text-slate-600" />
               </div>
               <div>
-                <CardTitle className="text-base">Create New Admin</CardTitle>
-                <CardDescription>Add a new administrator account directly to Supabase Auth</CardDescription>
+                <CardTitle className="text-base">Create New User Account</CardTitle>
+                <CardDescription>Add a new employee or administrator account directly to Supabase Auth</CardDescription>
               </div>
             </div>
             <button
@@ -80,7 +83,7 @@ export default function CreateAdminAccountCard() {
               className="flex items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700 w-full md:w-auto"
             >
               <UserPlus className="h-4 w-4" />
-              Create Admin Account
+              Create User Account
             </button>
           </div>
         </CardHeader>
@@ -102,8 +105,8 @@ export default function CreateAdminAccountCard() {
                 <UserPlus className="h-5 w-5 text-teal-600" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Create New Admin</h2>
-                <p className="text-sm text-slate-500">Fill in the administrator details below</p>
+                <h2 className="text-lg font-bold text-slate-900">Create New User Account</h2>
+                <p className="text-sm text-slate-500">Fill in the user details below</p>
               </div>
             </div>
 
@@ -167,6 +170,36 @@ export default function CreateAdminAccountCard() {
                 </p>
               </div>
 
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Account Role <span className="text-red-400">*</span>
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRole('employee')}
+                    className={`flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+                      role === 'employee'
+                        ? 'border-teal-500 bg-teal-50 text-teal-700'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Employee
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('admin')}
+                    className={`flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+                      role === 'admin'
+                        ? 'border-teal-500 bg-teal-50 text-teal-700'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Admin
+                  </button>
+                </div>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -180,7 +213,7 @@ export default function CreateAdminAccountCard() {
                   disabled={loading}
                   className="flex-1 rounded-lg bg-teal-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-50"
                 >
-                  {loading ? 'Creating...' : 'Create Admin'}
+                  {loading ? 'Creating...' : 'Create User'}
                 </button>
               </div>
             </form>
