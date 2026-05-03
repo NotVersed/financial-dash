@@ -83,7 +83,7 @@ export default async function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 mb-4">
+            <p className="text-sm text-slate-500 mb-9">
               Generates a formatted PDF report with program outcomes and client progress metrics.
             </p>
             <a
