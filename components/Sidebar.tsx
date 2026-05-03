@@ -10,7 +10,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/clients', label: 'Clients', icon: Users },
   { href: '/dashboard/reports', label: 'Reports', icon: FileText },
-  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard/settings', label: 'Information', icon: Settings }, // TODO: Later, will need to change the path name to `info` but right now it will break, need to fix that
   { href: '/dashboard/admin', label: 'Admin', icon: ShieldCheck },
 ]
 
