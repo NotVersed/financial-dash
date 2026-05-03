@@ -56,7 +56,7 @@ export async function GET(
     .from(METRICS_TABLE_NAME)
     .select('net_income, net_worth, credit_score, measurement_date')
     .eq('client_id', clientId)
-    .order('measurement_date', { ascending: false })
+    .order('financial_id', { ascending: false }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
     .limit(1)
 
   const latest = metrics?.[0] ?? null
@@ -92,7 +92,7 @@ export async function PATCH(
   const body = await request.json()
   console.log('[PATCH] body:', body)
 
-  // ✅ FIX: include goals
+  // FIX: include goals
   const clientUpdates = {
     first_name: body.first_name,
     last_name: body.last_name,
@@ -143,7 +143,7 @@ export async function PATCH(
     .from(METRICS_TABLE_NAME)
     .select('net_income, net_worth, credit_score')
     .eq('client_id', clientId)
-    .order('measurement_date', { ascending: false })
+    .order('id', { ascending: false }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
     .limit(1)
 
   const latest = latestMetrics?.[0] ?? null

@@ -26,7 +26,7 @@ export async function GET() {
                 .from('financial_info')
                 .select('*')
                 .eq('client_id', client.client_id)
-                .order('measurement_date', { ascending: false })
+                .order('financial_id', { ascending: false }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
                 .limit(1)
                 .single()
 

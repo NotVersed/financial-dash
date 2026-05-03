@@ -44,7 +44,8 @@ export default async function EditClientPage({
     .from('financial_info')
     .select('net_income, net_worth, credit_score, measurement_date')
     .eq('client_id', clientId)
-    .order('measurement_date', { ascending: false })
+    // TODO: to avoid redundant code, can probably just use functions in api/clients/route
+    .order('financial_id', { ascending: false }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
     .limit(1)
 
   if (metricsError) {

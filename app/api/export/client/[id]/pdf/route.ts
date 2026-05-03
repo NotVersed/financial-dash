@@ -38,7 +38,7 @@ export async function GET(
         .from('financial_info')
         .select('*')
         .eq('client_id', Number(id))
-        .order('measurement_date', { ascending: false })
+        .order('financial_id', { ascending: false }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
         .limit(1)
         .single()
 
@@ -54,7 +54,7 @@ export async function GET(
         .from('financial_info')
         .select('measurement_date, credit_score, net_income, net_worth')
         .eq('client_id', Number(id))
-        .order('measurement_date', { ascending: true })
+        .order('financial_id', { ascending: true }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
 
     const chartData = (timeSeries ?? []).map(row => ({
         date: row.measurement_date,

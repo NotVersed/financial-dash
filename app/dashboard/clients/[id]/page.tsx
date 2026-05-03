@@ -83,7 +83,8 @@ export default async function ClientDetailPage({
     .from(METRICS_TABLE_NAME)
     .select('net_income, net_worth, credit_score')
     .eq('client_id', clientId)
-    .order('measurement_date', { ascending: false })
+    // TODO: to avoid repeating calls, I think we can just use api/clients/route functions
+    .order('financial_id', { ascending: false }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
     .limit(1)
 
   const latest = metrics?.[0] ?? null
@@ -101,7 +102,7 @@ export default async function ClientDetailPage({
     .from(METRICS_TABLE_NAME)
     .select('measurement_date, credit_score, net_income, net_worth')
     .eq('client_id', clientId)
-    .order('measurement_date', { ascending: true })
+    .order('financial_id', { ascending: true }) // IMPORTANT - b/c dates can be from same day for same client, use the financial_info row id to identify latest update
 
   // -------------------------
   // Notes

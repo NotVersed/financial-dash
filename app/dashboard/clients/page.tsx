@@ -22,7 +22,7 @@ export default async function ClientsPage() {
   const { data: metrics } = await supabase
     .from(METRICS_TABLE_NAME)
     .select('*')
-    .order('updated_at', { ascending: false })
+    .order('financial_id', { ascending: false })
 
   // Merge them
   const combinedClients = mergeClientWithMetrics(

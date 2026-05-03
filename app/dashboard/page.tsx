@@ -49,6 +49,7 @@ async function getDashboardStats() {
   const { data: latestClients } = await supabase
   .from('financial_snapshots')
   .select('avg_credit_score, avg_income, avg_net_worth')
+  // TODO: check if this is going to be innacurate b/c potentially (but not necessarily likely) multiple updates for a client can occur in one day
   .order('date', { ascending: false })
   .limit(1)
 
@@ -84,6 +85,7 @@ async function getDashboardStats() {
   const { data: snapshotData } = await supabase
     .from('financial_snapshots') // MATERIALIZED VIEW
     .select('date, avg_income, avg_net_worth, avg_credit_score, total_clients')
+    // TODO: check if this is going to be innacurate b/c potentially (but not necessarily likely) multiple updates for a client can occur in one day
     .order('date', { ascending: true })
 
   const aggregatedMetrics: TimeSeriesMetrics[] = (snapshotData ?? []).map(row => ({
