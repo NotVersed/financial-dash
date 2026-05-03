@@ -12,13 +12,16 @@ type ClientInfo = {
   last_name: string
   email: string
   status: string
-  current_credit_score: number | null
-  current_net_worth: number | null
-  current_net_income: number | null
   notes: string | null
+
   goal_credit_score: number | null
   goal_net_income: number | null
   goal_net_worth: number | null
+
+  // IMPORTANT: include current values for UI
+  current_credit_score?: number | null
+  current_net_income?: number | null
+  current_net_worth?: number | null
 }
 
 type Props = {
@@ -28,6 +31,7 @@ type Props = {
 export default function ClientEditForm({ client }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
   const resolvedClientId = Number(client.id)
 
   const [error, setError] = useState('')
@@ -38,12 +42,16 @@ export default function ClientEditForm({ client }: Props) {
     last_name: client.last_name ?? '',
     email: client.email ?? '',
     status: client.status ?? 'active',
+
+    // restore financial fields
     current_credit_score: client.current_credit_score ?? '',
-    current_net_worth: client.current_net_worth ?? '',
     current_net_income: client.current_net_income ?? '',
+    current_net_worth: client.current_net_worth ?? '',
+
     goal_credit_score: client.goal_credit_score ?? '',
-    goal_net_worth: client.goal_net_worth ?? '',
     goal_net_income: client.goal_net_income ?? '',
+    goal_net_worth: client.goal_net_worth ?? '',
+
     notes: client.notes ?? '',
   })
 
@@ -77,6 +85,7 @@ export default function ClientEditForm({ client }: Props) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+
     setError('')
     setSuccess('')
 
@@ -90,12 +99,17 @@ export default function ClientEditForm({ client }: Props) {
       last_name: formData.last_name.trim(),
       email: formData.email.trim(),
       status: formData.status,
+
+      // send financial data → goes to financial_info
       current_credit_score: toNullableNumber(formData.current_credit_score),
       current_net_income: toNullableNumber(formData.current_net_income),
       current_net_worth: toNullableNumber(formData.current_net_worth),
+
+      // goals → stay in clients table
       goal_credit_score: toNullableNumber(formData.goal_credit_score),
       goal_net_income: toNullableNumber(formData.goal_net_income),
       goal_net_worth: toNullableNumber(formData.goal_net_worth),
+
       notes: formData.notes.trim() || null,
     }
 
@@ -130,27 +144,22 @@ export default function ClientEditForm({ client }: Props) {
     <form onSubmit={handleSubmit} className="space-y-6 text-slate-900">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-xl font-semibold text-slate-900">
-            Edit Client Information
-          </CardTitle>
+          <CardTitle className="text-xl font-semibold text-slate-900">Edit Client Information</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
 
           {/* Basic Info */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                First Name *
-              <input type="text" name="first_name"
+                First Name
+                <input type="text" name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              />
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"/>
               </label>
             </div>
-
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Last Name *
@@ -251,6 +260,62 @@ export default function ClientEditForm({ client }: Props) {
                 />
                 <p className="text-sm mt-2 text-slate-600">
                   {formatCurrencyInput(formData.current_net_worth) || '—'}
+                </p>
+              </CardContent>
+            </Card>
+
+          </div>
+
+          {/* Goal Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="pt-6">
+                <p className="text-sm font-medium text-slate-700 mb-2">
+                  Goal Credit Score
+                </p>
+                <input
+                  name="goal_credit_score"
+                  type="number"
+                  value={formData.goal_credit_score}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xl font-semibold text-slate-900"
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="pt-6">
+                <p className="text-sm font-medium text-slate-700 mb-2">
+                  Goal Net Income
+                </p>
+                <input
+                  name="goal_net_income"
+                  type="number"
+                  value={formData.goal_net_income}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xl font-semibold text-slate-900"
+                />
+                <p className="text-sm mt-2 text-slate-600">
+                  {formatCurrencyInput(formData.goal_net_income) || '—'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="pt-6">
+                <p className="text-sm font-medium text-slate-700 mb-2">
+                  Goal Net Worth
+                </p>
+                <input
+                  name="goal_net_worth"
+                  type="number"
+                  value={formData.goal_net_worth}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xl font-semibold text-slate-900"
+                />
+                <p className="text-sm mt-2 text-slate-600">
+                  {formatCurrencyInput(formData.goal_net_worth) || '—'}
                 </p>
               </CardContent>
             </Card>
