@@ -1,9 +1,9 @@
 "use client"
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Search, UserPlus, X } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getClientDisplayName } from './dataInformation.js'
 
 type Client = {
@@ -120,6 +120,17 @@ export default function ClientList({ clients = [] }: ClientListProps) {
     setError('')
     setSuccess(false)
   }
+
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const shouldOpen = searchParams.get('add')
+
+    if (shouldOpen === 'true') {
+      setShowModal(true)
+        //clean the URL
+      router.replace('/dashboard/clients')
+    }
+  }, [searchParams, router])
 
   return (
     <>
