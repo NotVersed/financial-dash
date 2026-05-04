@@ -218,7 +218,7 @@ export default async function DashboardPage() {
             </Link>
 
             <Link
-              href="/dashboard/clients"
+              href="/dashboard/clients?add=true"
               className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700"
             >
               <TrendingUp className="h-6 w-6" />
