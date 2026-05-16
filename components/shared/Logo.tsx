@@ -14,6 +14,7 @@ export function Logo({ className = '', size = 40, showText = false }: LogoProps)
           src="/logo-new.png" 
           alt="Logo" 
           fill
+          sizes="(max-width: 768px) 100vw, 48px"
           className={`object-contain ${className}`}
           priority
         />
