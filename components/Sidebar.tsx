@@ -87,7 +87,7 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
           Sign Out
         </button>
 
-        <p className="text-xs text-slate-400 px-3">© 2026 LIFE Programs</p>
+        <p className="text-xs text-slate-400 px-3">© 2026 Randy Stephens</p>
       </div>
     </aside>
   )

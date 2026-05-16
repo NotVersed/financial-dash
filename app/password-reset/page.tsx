@@ -94,7 +94,7 @@ export default function PasswordResetPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-gray-50 to-zinc-100 p-4">
       <div className="absolute top-8 left-8">
-        <h2 className="text-2xl font-bold text-slate-800">LIFE</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Randy Stephens</h2>
       </div>
 
       <Card className="w-full max-w-md shadow-2xl border-slate-200">
@@ -170,7 +170,7 @@ export default function PasswordResetPage() {
       </Card>
 
       <div className="absolute bottom-8 text-center text-sm text-slate-500">
-        <p>© 2026 LIFE Programs. All rights reserved.</p>
+        <p>© 2026 Randy Stephens. All rights reserved.</p>
       </div>
     </div>
   )

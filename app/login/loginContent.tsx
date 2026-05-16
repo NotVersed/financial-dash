@@ -213,7 +213,7 @@ export function LoginContent() {
 
       {/* Footer */}
       <div className="absolute bottom-8 text-center text-sm text-slate-500">
-        <p>© 2026 LIFE Programs. All rights reserved.</p>
+        <p>© 2026 Randy Stephens. All rights reserved.</p>
       </div>
     </div>
   )

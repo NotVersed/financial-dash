@@ -47,11 +47,11 @@ async function getDashboardStats() {
     .eq('status', 'active')
 
   const { data: latestClients } = await supabase
-  .from('financial_snapshots')
-  .select('avg_credit_score, avg_income, avg_net_worth')
-  // TODO: check if this is going to be innacurate b/c potentially (but not necessarily likely) multiple updates for a client can occur in one day
-  .order('date', { ascending: false })
-  .limit(1)
+    .from('financial_snapshots')
+    .select('avg_credit_score, avg_income, avg_net_worth')
+    // TODO: check if this is going to be innacurate b/c potentially (but not necessarily likely) multiple updates for a client can occur in one day
+    .order('date', { ascending: false })
+    .limit(1)
 
   const snapshot = latestClients?.[0]
 
@@ -64,18 +64,35 @@ async function getDashboardStats() {
   //  MILESTONES & TOTAL NUM OF FINANCIAL RECORDS
   // -------------------------
   const { count: financialEntries } = await supabase
-  .from('financial_info')
-  .select('*', { count: 'exact', head: true })
+    .from('financial_info')
+    .select('*', { count: 'exact', head: true })
 
   const { data: milestonesData, error: milestonesError } = await supabase
-    .rpc('get_milestones_achieved')
+    .from('financial_info')
+    .select(`
+    credit_score,
+    net_income,
+    net_worth,
+    clients!inner (
+      goal_credit_score,
+      goal_net_income,
+      goal_net_worth
+    )
+  `)
 
+  const milestonesCount = (milestonesData ?? []).reduce((total, record) => {
+    const client = record.clients as unknown as {
+      goal_credit_score: number | null
+      goal_net_income: number | null
+      goal_net_worth: number | null
+    }
+    if(!client) return total;
+    if (record.credit_score != null && client.goal_credit_score != null && record.credit_score >= client.goal_credit_score) total++
+    if (record.net_income != null && client.goal_net_income != null && record.net_income >= client.goal_net_income) total++
+    if (record.net_worth != null && client.goal_net_worth != null && record.net_worth >= client.goal_net_worth) total++
+    return total
+  }, 0)
 
-  if (milestonesError) {
-    console.error('Milestones RPC error:', milestonesError)
-  }
-
-  const milestonesCount = milestonesData || 0
 
 
 
@@ -170,7 +187,7 @@ export default async function DashboardPage() {
     <div className="p-8 text-slate-900">
 
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">LIFE Dashboard</h1>
+        <h1 className="text-2xl font-bold">Financial Dashboard</h1>
         <p className="text-sm text-slate-500 mt-1">
           Client Financial Progress Tracking
         </p>

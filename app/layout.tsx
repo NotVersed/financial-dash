@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LIFE | Financial Progress Tracker",
+  title: "Financial Dashboard by Randy Stephens",
   description: "Client Financial Progress Tracking Dashboard",
 };
 
